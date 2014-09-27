@@ -14,9 +14,9 @@ var ROOT_DIR    = process.argv[2];
 
 var REPLACE_IN  = [
     // Android
-    "android/assets/www/js/PreloaderApp.js",
+    "android/assets/www/js/PackageApp.js",
     // iOS
-    "ios/www/js/platform/PreloaderApp.js"
+    "ios/www/js/PreloaderApp.js"
 ];
 
 var updateUrl = process.env.UPDATE_URL;
