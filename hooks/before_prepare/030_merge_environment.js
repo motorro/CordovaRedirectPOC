@@ -28,23 +28,22 @@ if (process.env.TARGET) {
     target = process.env.TARGET;
 }
 
-if (false === fs.existsSync(ENVIRONMENT_FILE)) {
-    throw new Error("Environment file missing!");
-}
+// Environment common to all users (public)
 if (false === fs.existsSync(COMMON_ENVIRONMENT_FILE)) {
     throw new Error("Common environment file missing!");
 }
-var config = JSON.parse(fs.readFileSync(ENVIRONMENT_FILE, 'utf8'));
-var common_config = JSON.parse(fs.readFileSync(COMMON_ENVIRONMENT_FILE, 'utf8'));
-
-var private_environment = config[target];
-var common_environment = common_config[target];
-
-if (undefined === private_environment) {
-    throw new Error(["Environment", target, "was not found in environment file!"].join(" "));
-}
+var common_environment = JSON.parse(fs.readFileSync(COMMON_ENVIRONMENT_FILE, 'utf8'))[target];
 if (undefined === common_environment) {
     throw new Error(["Environment", target, "was not found in common environment file!"].join(" "));
+}
+
+// Private environment
+var private_environment = {};
+if (fs.existsSync(ENVIRONMENT_FILE)) {
+    private_environment = JSON.parse(fs.readFileSync(ENVIRONMENT_FILE, 'utf8'))[target];
+    if (undefined === private_environment) {
+        throw new Error(["Environment", target, "was not found in environment file!"].join(" "));
+    }
 }
 
 var environment = (function(){
