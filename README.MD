@@ -19,7 +19,5 @@ As soon as browser gets redirected to package when device is ready you may use a
 
 ## Building and running
 
-To build an app set the UPDATE_URL environment variable.
-Example:
-
-    UPDATE_URL=http://host.com/update.zip cordova emulate android
+To build an app set the 'updateURL' environment variable in 'common_environment.json'.
+That is an URL to take update package from.
