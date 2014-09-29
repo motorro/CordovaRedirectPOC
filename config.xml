@@ -4,9 +4,19 @@
     <description>
         A sample Apache Cordova application that responds to the deviceready event.
     </description>
-    <author email="dev@cordova.apache.org" href="http://cordova.io">
-        Apache Cordova Team
+    <author email="motorro@gmail.com" href="https://github.com/motorro/CordovaRedirectPOC">
+        motorro
     </author>
-    <content src="index.html" />
+    <content src="preloader.html" />
     <access origin="*" />
+
+    <feature name="Device">
+        <param name="id" value="org.apache.cordova.device" />
+    </feature>
+    <feature name="File">
+        <param name="id" value="org.apache.cordova.file" />
+    </feature>
+    <feature name="File Transfer">
+        <param name="id" value="org.apache.cordova.file-transfer" />
+    </feature>
 </widget>

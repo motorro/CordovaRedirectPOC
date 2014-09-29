@@ -19,5 +19,7 @@ As soon as browser gets redirected to package when device is ready you may use a
 
 ## Building and running
 
-To build an app set the 'updateURL' environment variable in 'common_environment.json'.
+1. Use Cordova 3.6 to restore used plugin list:
+    cordova restore plugins --experimental
+2. To build an app set the 'updateURL' environment variable in 'common_environment.json'.
 That is an URL to take update package from.
