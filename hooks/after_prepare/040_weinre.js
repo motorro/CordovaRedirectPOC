@@ -18,9 +18,11 @@ var os=require('os');
 var ROOT_DIR = process.argv[2];
 var PLACE_TO = [
     // Android
-    "android/assets/www/index.html",
+    "android/assets/www/preloader.html",
+    "android/assets/www/package.html",
     // iOS
-    "ios/www/index.html"
+    "ios/www/preloader.html",
+    "ios/www/package.html"
 ];
 
 var target = "development";
