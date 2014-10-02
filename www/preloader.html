@@ -2,10 +2,11 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Redirect PoC::Preloader</title>
+    <title>Redirect POC::Preloader</title>
     <!-- Weinre placeholder. Will be replaced with Weinre script by prepare hook -->
     <!-- See hooks/after_prepare/040_weinre.js for details -->
     <!-- WEINRE -->
+    <script type="text/javascript" src="build/PreloaderApp.js"></script>
 </head>
 <body>
     <h1>Redirect PoC</h1>
@@ -16,10 +17,9 @@
     <ol>
         <li>Check the storage folder for update package</li>
         <li>If update is found - redirect there</li>
-        <li>If update isn't found - use redirect to package.html</li>
+        <li>If update isn't found - use redirect to packaged index.html</li>
     </ol>
-    <div>Update workflow described in package.html</div>
-    <div>
+    <div id="controls">
         <button id="start">Start workflow</button>
         <button id="reset">Reset app</button>
     </div>
