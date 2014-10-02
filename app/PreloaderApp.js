@@ -6,9 +6,9 @@
  * Time: 9:28
  */
 Q = require("q");
-Updater = require("lib/Updater");
-Button = require("lib/Button");
-readyTrigger = require("lib/readyTrigger");
+Updater = require("./lib/Updater");
+Button = require("./lib/Button");
+readyTrigger = require("./lib/readyTrigger");
 
 
 /**

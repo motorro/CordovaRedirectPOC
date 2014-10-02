@@ -6,7 +6,23 @@
     <!-- Weinre placeholder. Will be replaced with Weinre script by prepare hook -->
     <!-- See hooks/after_prepare/040_weinre.js for details -->
     <!-- WEINRE -->
-    <script type="text/javascript" src="build/PreloaderApp.js"></script>
+    <!--script type="text/javascript" src="build/PreloaderApp.js"></script-->
+    <style type="text/css">
+        html, body {
+            height: 100%;
+        }
+        #log {
+            height: 10em;
+            overflow-y: scroll;
+            border: 1px solid Black;
+            margin-top: 1em;
+            padding: 0.5em;
+        }
+        #controls {
+            margin-top: 1em;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <h1>Redirect PoC</h1>
@@ -23,5 +39,6 @@
         <button id="start">Start workflow</button>
         <button id="reset">Reset app</button>
     </div>
+    <div id="log">cdf</div>
 </body>
 </html>
