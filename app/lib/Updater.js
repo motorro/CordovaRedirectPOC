@@ -38,9 +38,21 @@ function Updater() {
  * @returns {promise}
  */
 Updater.prototype.getLatestInstallURL = function() {
-    return this._getLatestInstallDirectory(false).then(function(dir){
-       return undefined !== dir ? dir.toURL : dir;
-    });
+    return this._getLatestInstallDirectory(false)
+    .then(
+        function(dir){
+            return dir && dir.toURL;
+        },
+        function(reason) {
+            // Directory was not found
+            // Consider as non-error
+            if (1 === (reason && reason.code)) {
+                return undefined;
+            }
+            // Otherwise - rethrow
+            throw reason;
+        }
+    );
 };
 
 /**

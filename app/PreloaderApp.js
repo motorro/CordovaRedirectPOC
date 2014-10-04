@@ -15,19 +15,22 @@ readyTrigger = require("./lib/readyTrigger");
  */
 readyTrigger(function(){
     log("Preloader initialized...");
-    var startButton = new Button("start", function() {
-        startButton.setEnabled(false);
-        resetButton.setEnabled(false);
-        startWorkflow();
-    });
 
-    var resetButton = new Button("reset", function() {
+    function runCommand(command) {
         startButton.setEnabled(false);
         resetButton.setEnabled(false);
-        resetApplication().fin(function(){
+        command().fin(function(){
             startButton.setEnabled(true);
             resetButton.setEnabled(true);
         });
+    }
+
+    var startButton = new Button("start", function() {
+        runCommand(startWorkflow);
+    });
+
+    var resetButton = new Button("reset", function() {
+        runCommand(resetApplication);
     });
 
 });
@@ -39,7 +42,20 @@ readyTrigger(function(){
  * 3) If not - redirect to package.html
  */
 function startWorkflow() {
-
+    var updater = new Updater();
+    return updater.getLatestInstallURL()
+    .then(function(url) {
+        if (undefined === url) {
+            log ("No updates found. Redirecting to packaged index.html");
+        } else {
+            log ("Found an update! Redirecting to updated index.html");
+        }
+    })
+    .fail(function(reason) {
+        log("Error getting update package URL: " + reason.message);
+        console.log(reason);
+        throw reason;
+    });
 }
 
 /**
@@ -56,6 +72,7 @@ function resetApplication() {
 function log(message) {
     console.log(message);
     var messageLine = document.createElement("p");
-    messageLine.appendChild(document.createTextNode(message));
+    var node = messageLine.appendChild(document.createTextNode(message));
     document.getElementById("log").appendChild(messageLine);
+    return node;
 }
