@@ -10,12 +10,11 @@ Updater = require("./lib/Updater");
 Button = require("./lib/Button");
 readyTrigger = require("./lib/readyTrigger");
 
-
 /**
  * Entry point
  */
 readyTrigger(function(){
-    console.log("Preloader start...");
+    log("Preloader initialized...");
     var startButton = new Button("start", function() {
         startButton.setEnabled(false);
         resetButton.setEnabled(false);
@@ -48,4 +47,15 @@ function startWorkflow() {
  */
 function resetApplication() {
 
+}
+
+/**
+ * Logs to console and to log window
+ * @param message
+ */
+function log(message) {
+    console.log(message);
+    var messageLine = document.createElement("p");
+    messageLine.appendChild(document.createTextNode(message));
+    document.getElementById("log").appendChild(messageLine);
 }

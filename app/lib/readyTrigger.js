@@ -18,12 +18,19 @@ module.exports = function readyTrigger (onReady, readyState) {
     var isDeviceReady = function() {
         return window.device && window.device.available;
     };
-    var isDocumentReady = function() {
-        return readyState === document.readyState;
-    };
+    var isDocumentReady = (function() {
+        var wasTriggered = false;
+        return function() {
+            return wasTriggered || (wasTriggered = readyState === document.readyState);
+        }
+    })();
     var checkReady = function() {
         var ready = isDocumentReady() && isDeviceReady();
-        if (ready) onReady();
+        if (ready) {
+            onReady();
+            window.document.removeEventListener("deviceready", checkReady, false);
+            window.document.removeEventListener("readystatechange", checkReady, false);
+        }
         return ready;
     };
 

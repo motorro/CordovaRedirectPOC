@@ -6,7 +6,11 @@
     <!-- Weinre placeholder. Will be replaced with Weinre script by prepare hook -->
     <!-- See hooks/after_prepare/040_weinre.js for details -->
     <!-- WEINRE -->
-    <!--script type="text/javascript" src="build/PreloaderApp.js"></script-->
+
+    <!-- CORDOVA APP-->
+    <script type="text/javascript" src="cordova.js"></script>
+
+    <script type="text/javascript" src="build/PreloaderApp.js"></script>
     <style type="text/css">
         html, body {
             height: 100%;
@@ -39,6 +43,6 @@
         <button id="start">Start workflow</button>
         <button id="reset">Reset app</button>
     </div>
-    <div id="log">cdf</div>
+    <div id="log"></div>
 </body>
 </html>
