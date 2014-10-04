@@ -6,6 +6,9 @@
  * Time: 9:28
  */
 Q = require("q");
+Logger = require("./lib/Logger");
+var log = Logger.log;
+
 Updater = require("./lib/Updater");
 Button = require("./lib/Button");
 readyTrigger = require("./lib/readyTrigger");
@@ -14,6 +17,7 @@ readyTrigger = require("./lib/readyTrigger");
  * Entry point
  */
 readyTrigger(function(){
+    Logger.init("log");
     log("Preloader initialized...");
 
     function runCommand(command) {
@@ -65,14 +69,3 @@ function resetApplication() {
 
 }
 
-/**
- * Logs to console and to log window
- * @param message
- */
-function log(message) {
-    console.log(message);
-    var messageLine = document.createElement("p");
-    var node = messageLine.appendChild(document.createTextNode(message));
-    document.getElementById("log").appendChild(messageLine);
-    return node;
-}
