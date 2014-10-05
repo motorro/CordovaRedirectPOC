@@ -6,26 +6,23 @@
  * Time: 8:10
  */
 
-/**
- * DOM element for output
- */
-var output = undefined;
-
 module.exports = {
     /**
      * Initializes logger
-     * @param outputElementId Id of input element
+     * @param output DOM element to append outputs to
+     * @returns Log function bound to 'output' element
      */
-    init: function(outputElementId) {
-        output = window.document.getElementById(outputElementId);
+    init: function(output) {
+        return module.exports.log.bind(undefined, output);
     },
     /**
      * Logs a message
+     * @param output DOM element to append outputs to
      * @param message Message
      * @param [node] If passed that object's nodeValue will be changed instead of inserting new line
      * @returns {Node} The message node
      */
-    log: function log(message, node) {
+    log: function log(output, message, node) {
         console.log(message);
         if (undefined === output) {
             return undefined;

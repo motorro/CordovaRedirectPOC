@@ -5,9 +5,8 @@
  * Date: 27.09.2014
  * Time: 9:28
  */
-Q = require("q");
-Logger = require("./lib/Logger");
-var log = Logger.log;
+var Q = require("q");
+var log = undefined;
 
 Updater = require("./lib/Updater");
 Button = require("./lib/Button");
@@ -17,7 +16,7 @@ readyTrigger = require("./lib/readyTrigger");
  * Entry point
  */
 readyTrigger(function(){
-    Logger.init("log");
+    log = require("./lib/Logger").init(document.getElementById("log"));
     log("Preloader initialized...");
 
     function runCommand(command) {
