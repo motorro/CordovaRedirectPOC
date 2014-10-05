@@ -15,32 +15,44 @@
  */
 module.exports = function readyTrigger (onReady, readyState) {
     readyState = readyState || "interactive";
+
     var isDeviceReady = function() {
         return window.device && window.device.available;
     };
-    var isDocumentReady = (function() {
-        var wasTriggered = false;
-        return function() {
-            return wasTriggered || (wasTriggered = readyState === document.readyState);
-        }
-    })();
-    var checkReady = function() {
-        var ready = isDocumentReady() && isDeviceReady();
-        if (ready) {
-            onReady();
-            window.document.removeEventListener("deviceready", checkReady, false);
-            window.document.removeEventListener("readystatechange", checkReady, false);
-        }
-        return ready;
+
+    var isDocumentReady = function() {
+        return readyState === window.document.readyState;
     };
 
-    if (checkReady()) return;
+    var waitForDevice = function() {
+        var handler = function() {
+            if (isDeviceReady()) {
+                window.document.removeEventListener("deviceready", handler, false);
+                onReady();
+            }
+        };
+        window.document.addEventListener("deviceready", handler, false);
+    };
 
-    if (false === isDeviceReady()) {
-        window.document.addEventListener("deviceready", checkReady, false);
-    }
-
-    if (false === isDocumentReady()) {
-        window.document.addEventListener("readystatechange", checkReady, false);
+    if (isDocumentReady()) {
+        if (isDeviceReady()) {
+            onReady();
+        } else {
+            waitForDevice();
+        }
+    } else {
+        (function(){
+            var handler = function() {
+                if (readyState === document.readyState) {
+                    window.document.removeEventListener("readystatechange", handler, false);
+                    if (isDeviceReady()) {
+                        onReady();
+                    } else {
+                        waitForDevice();
+                    }
+                }
+            };
+            window.document.addEventListener("readystatechange", handler, false);
+        })();
     }
 };
