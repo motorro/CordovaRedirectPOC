@@ -35,7 +35,6 @@ readyTrigger(function(){
     var resetButton = new Button("reset", function() {
         runCommand(resetApplication);
     });
-
 });
 
 /**
@@ -49,9 +48,11 @@ function startWorkflow() {
     return updater.getLatestInstallURL()
     .then(function(url) {
         if (undefined === url) {
-            log ("No updates found. Redirecting to packaged index.html");
+            log ("No updates found.");
+            redirect("index.html");
         } else {
-            log ("Found an update! Redirecting to updated index.html");
+            log ("Found an update!");
+            redirect([url, "index.html"].join("/"));
         }
     })
     .fail(function(reason) {
@@ -59,6 +60,19 @@ function startWorkflow() {
         console.log(reason);
         throw reason;
     });
+
+    function redirect(url) {
+        var secondsLeft = 3;
+        var logString = undefined;
+        (function countdown(){
+            logString = log (["Redirecting to", url, "in", secondsLeft, "seconds"].join(" "), logString);
+            if (0 === secondsLeft--) {
+                window.location.href = url;
+                return;
+            }
+            window.setTimeout(countdown, 1000);
+        })();
+    }
 }
 
 /**

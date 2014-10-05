@@ -2,9 +2,49 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Redirect PoC::Packaged file</title>
+    <title>Redirect POC::Packaged</title>
+    <!-- Weinre placeholder. Will be replaced with Weinre script by prepare hook -->
+    <!-- See hooks/after_prepare/040_weinre.js for details -->
+    <!-- WEINRE -->
+
+    <!-- CORDOVA APP-->
+    <script type="text/javascript" src="cordova.js"></script>
+
+    <script type="text/javascript" src="build/PreloaderApp.js"></script>
+    <style type="text/css">
+        html, body {
+            height: 100%;
+        }
+        #log {
+            height: 10em;
+            overflow-y: scroll;
+            border: 1px solid Black;
+            margin-top: 1em;
+            padding: 0.5em;
+        }
+        #log p {
+            margin: 0;
+            padding: 0;
+        }
+        #controls {
+            margin-top: 1em;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-
+<h1>Redirect POC::Packaged</h1>
+<div>
+    This is a packaged app that may eventually look for updates
+</div>
+<h2>Workflow</h2>
+<ol>
+    <li>Check the update URL</li>
+    <li>If update is found - download and unpack</li>
+</ol>
+<div id="controls">
+    <button id="start">Start workflow</button>
+</div>
+<div id="log"></div>
 </body>
 </html>
