@@ -31,11 +31,11 @@ if (false === fs.existsSync(SOURCE_DIR)) {
 Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR)
     .then(function(){return copyHTML(SOURCE_DIR, DESTINATION_DIR);})
     .then(function(numCopied){
-        console.log(numCopied + " app files copied...");
+        console.log(numCopied + " app files copied.");
     })
-    .then(function(){return Q.nfcall(browserifySource, SOURCE_DIR, DESTINATION_DIR)})
+    .then(function(){return browserifySource(SOURCE_DIR, DESTINATION_DIR);})
     .then(function(numBuilt){
-        console.log(numBuilt + " updates built.")
+        console.log(numBuilt + " app sources built.")
     })
     .done();
 
@@ -123,56 +123,23 @@ function copyHTML(src, dst) {
  * @param callback Result callback
  */
 function browserifySource(src, dst, callback) {
-    fs.readdir(src, function(err, files) {
-        if (err) {
-            callback(err);
-            return;
-        }
-
-        var moreToGo = files.length;
-        if (0 === moreToGo) {
-            callback(undefined, 0);
-            return;
-        }
-
-        var hasErrors = false;
-        var processed = 0;
-
-        files.forEach(function(file) {
-            if (".js" !== path.extname(file)) {
-                decrementToGoAndCheckFinished();
-                return;
-            }
-            var fullPath = path.join(src, file);
-            fs.stat(fullPath, function(err, stat) {
-                if (hasErrors) {
-                    return;
+    return Q.nfcall(fs.readdir, src)
+        .then(createFileExtensionFilter(src, ".js"))
+        .then(function(files) {
+            return Q.all(files.map(
+                function(file) {
+                    return Q.nfcall(
+                        exec,
+                        ["browserify", path.join(src, file), ">", path.join(dst, file)].join(" ")
+                    ).then(function(result) {
+                        var stdout = result && result[0];
+                        if (stdout) console.log(stdout);
+                        return true;
+                    })
                 }
-                if (err) {
-                    callback(err);
-                    return;
-                }
-                if (stat.isDirectory()) {
-                    decrementToGoAndCheckFinished();
-                    return;
-                }
-                exec (
-                    ["browserify", fullPath, ">", path.join(dst, file)].join(" "),
-                    function(error, stdout, stderr){
-                        if (error) throw error;
-                        ++processed;
-                        decrementToGoAndCheckFinished();
-                    }
-                );
-            });
+            ));
+        })
+        .then(function(built){
+            return built.length;
         });
-
-        function decrementToGoAndCheckFinished() {
-            --moreToGo;
-            if (0 === moreToGo) {
-                callback(undefined, processed);
-            }
-        }
-    });
-
 }
