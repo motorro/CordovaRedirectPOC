@@ -17,12 +17,14 @@ var os=require('os');
 
 var ROOT_DIR = process.argv[2];
 var PLACE_TO = [
+    // Update
+    "../update/build/index.html",
     // Android
     "android/assets/www/preloader.html",
-    "android/assets/www/package.html",
+    "android/assets/www/index.html",
     // iOS
     "ios/www/preloader.html",
-    "ios/www/package.html"
+    "ios/www/index.html"
 ];
 
 var target = "development";

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Browserifies app directory
+ * Browserifies update directory and builds update.zip
+ * TODO: Use gulp - this is just a Q exercise :)
  * User: motorro
  * Date: 28.09.2014
  * Time: 7:50
@@ -28,7 +29,18 @@ if (false === fs.existsSync(SOURCE_DIR)) {
     throw new Error("Source directory not found!");
 }
 
+/*
+    1. Check output exists
+    2. Cleanup output directory
+    3. Copy all .html files
+    4. Browserify each .js in source directory
+    5. TODO: Zip all files to update.zip
+    6. TODO: Remove everything but .zip
+*/
 Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR)
+    .then(function(){ return Q.nfcall(fs.readdir, DESTINATION_DIR); })
+    .then(createFileExtensionFilter(DESTINATION_DIR, ".*"))
+    .then(deleteFiles.bind(undefined, DESTINATION_DIR))
     .then(function(){return copyHTML(SOURCE_DIR, DESTINATION_DIR);})
     .then(function(numCopied){
         console.log(numCopied + " app files copied.");
@@ -38,7 +50,6 @@ Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR)
         console.log(numBuilt + " app sources built.")
     })
     .done();
-
 
 /**
  * Filters out files with given extensions
@@ -95,11 +106,26 @@ function copyFile(src, dst) {
     return result.promise;
 }
 
+/**
+ * Deletes passed files
+ * @param dir Working dir
+ * @param files Files to delete
+ * @returns {Promise}
+ */
+function deleteFiles(dir, files) {
+    return Q.all(files.map(
+        function(file) {
+            return Q.nfcall(fs.unlink, path.join(dir, file));
+        }
+    ));
+}
+
 
 /**
  * Copies HTML files to output directory
  * @param src Source dir
  * @param dst Destination dir
+ * @returns {Promise}
  */
 function copyHTML(src, dst) {
     return Q.nfcall(fs.readdir, src)
@@ -120,9 +146,9 @@ function copyHTML(src, dst) {
  * Browserifies each file in source directory
  * @param src Source dir
  * @param dst Destination dir
- * @param callback Result callback
+ * @returns {Promise}
  */
-function browserifySource(src, dst, callback) {
+function browserifySource(src, dst) {
     return Q.nfcall(fs.readdir, src)
         .then(createFileExtensionFilter(src, ".js"))
         .then(function(files) {
