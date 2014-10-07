@@ -9,6 +9,8 @@
 var fs = require('fs');
 var path = require('path');
 var exec = require('child_process').exec;
+var JSZip = require("jszip");
+var Q = require("q");
 
 var ROOT_DIR    = process.argv[2];
 var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
@@ -26,104 +28,92 @@ if (false === fs.existsSync(SOURCE_DIR)) {
     throw new Error("Source directory not found!");
 }
 
-// Create output directory
-hooksutils.ensureDirExists(DESTINATION_DIR, function(err) {
-    if (err) throw err;
-    copyHTML(SOURCE_DIR, DESTINATION_DIR, function(err, appNumber) {
-        if (err) throw err;
-        console.log(appNumber + " app files copied...");
-        browserifySource(SOURCE_DIR, DESTINATION_DIR, function(err, appNumber) {
-            if (err) throw err;
-            console.log(appNumber + " updates built. Done!");
+Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR)
+    .then(function(){return copyHTML(SOURCE_DIR, DESTINATION_DIR);})
+    .then(function(numCopied){
+        console.log(numCopied + " app files copied...");
+    })
+    .then(function(){return Q.nfcall(browserifySource, SOURCE_DIR, DESTINATION_DIR)})
+    .then(function(numBuilt){
+        console.log(numBuilt + " updates built.")
+    })
+    .done();
+
+
+/**
+ * Filters out files with given extensions
+ * Directories are skipped
+ * @param folder Base path
+ * @param filter Extensions to include
+ * @returns {Promise}
+ */
+function createFileExtensionFilter(folder, filter) {
+    if (!filter) filter = [".*"];
+    if (!Array.isArray(filter)) filter = [filter];
+    return function(files) {
+        if (".*" !== filter[0]) {
+            files = files.filter(function(file) {
+                return filter.indexOf(path.extname(file)) >= 0;
+            });
+        }
+        return Q.all(files.map(
+            function(file) {
+                return Q.nfcall(fs.stat, path.join(folder, file));
+            }
+        )).then(function(stats){
+            return files.filter(function(file, index){
+                return !stats[index].isDirectory();
+            })
         });
+    }
+}
+
+/**
+ * Copies file
+ * @param src
+ * @param dst
+ * @returns {Promise}
+ */
+function copyFile(src, dst) {
+    var result = Q.defer();
+
+    var rd = fs.createReadStream(src);
+    rd.on("error", function(err) {
+        result.reject(err);
     });
-});
+
+    var wr = fs.createWriteStream(dst);
+    wr.on("error", function(err) {
+        result.reject(err);
+    });
+
+    wr.on("close", function(ex) {
+        result.resolve();
+    });
+    rd.pipe(wr);
+
+    return result.promise;
+}
+
 
 /**
  * Copies HTML files to output directory
  * @param src Source dir
  * @param dst Destination dir
- * @param callback Result callback
  */
-function copyHTML(src, dst, callback) {
-    fs.readdir(src, function(err, files) {
-        if (err) {
-            callback(err);
-            return;
-        }
-
-        var moreToGo = files.length;
-        if (0 === moreToGo) {
-            callback(undefined, 0);
-            return;
-        }
-
-        var hasErrors = false;
-        var processed = 0;
-
-        files.forEach(function (file) {
-            if (".html" !== path.extname(file)) {
-                decrementToGoAndCheckFinished();
-                return;
-            }
-            var fullPath = path.join(src, file);
-            fs.stat(fullPath, function (err, stat) {
-                if (hasErrors) {
-                    return;
+function copyHTML(src, dst) {
+    return Q.nfcall(fs.readdir, src)
+        .then(createFileExtensionFilter(src, ".html"))
+        .then(function(files) {
+            return Q.all(files.map(
+                function(file) {
+                    return copyFile(path.join(src, file), path.join(dst, file));
                 }
-                if (err) {
-                    callback(err);
-                    return;
-                }
-                if (stat.isDirectory()) {
-                    decrementToGoAndCheckFinished();
-                    return;
-                }
-
-                copyFile(fullPath, path.join(dst, file), function(err){
-                    if (err) {
-                        callback(err);
-                        return;
-                    }
-                    ++processed;
-                    decrementToGoAndCheckFinished();
-                });
-            });
+            ));
+        })
+        .then(function(copied){
+            return copied.length;
         });
-
-        function copyFile(src, dst, callback) {
-            var callbackCalled = false;
-
-            var rd = fs.createReadStream(src);
-            rd.on("error", function(err) {
-                done(err);
-            });
-
-            var wr = fs.createWriteStream(dst);
-            wr.on("error", function(err) {
-                done(err);
-            });
-
-            wr.on("close", function(ex) {
-                done();
-            });
-            rd.pipe(wr);
-
-            function done(err) {
-                if (!callbackCalled) {
-                    callback(err);
-                    callbackCalled = true;
-                }
-            }
-        }
-
-        function decrementToGoAndCheckFinished() {
-            --moreToGo;
-            if (0 === moreToGo) {
-                callback(undefined, processed);
-            }
-        }
-    })
 }
 
 /**

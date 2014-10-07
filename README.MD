@@ -19,7 +19,8 @@ As soon as browser gets redirected to package when device is ready you may use a
 
 ## Building and running
 
-1. Use Cordova 3.6 to restore used plugin list: `cordova restore plugins --experimental`.
-2. Place an "update package" (zip with just an index.html will do) to some HTTP server. Sample "update package" is located in `update` folder. This sample is built the same time cordova app is prepared. So to get a zip file run `cordova prepare`.
-2. Set the `updateURL` environment variable in `common_environment.json` to URL to the above update package.
-3. `cordova run your_platform`
+1. `npm install`
+2. Use Cordova 3.6 to restore used plugin list: `cordova restore plugins --experimental`.
+3. Place an "update package" (zip with just an index.html will do) to some HTTP server. Sample "update package" is located in `update` folder. This sample is built the same time cordova app is prepared. So to get a zip file run `cordova prepare`.
+4. Set the `updateURL` environment variable in `common_environment.json` to URL to the above update package.
+5. `cordova run your_platform`
