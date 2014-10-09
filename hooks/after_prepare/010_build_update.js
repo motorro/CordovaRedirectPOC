@@ -10,7 +10,7 @@
 var fs = require('fs');
 var path = require('path');
 var exec = require('child_process').exec;
-var JSZip = require("jszip");
+var rimraf = require('rimraf');
 var Q = require("q");
 
 var ROOT_DIR    = process.argv[2];
@@ -21,7 +21,7 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
 var hooksutils = require([HOOKS_DIR, "hooksutils"].join("/"));
 
 var SOURCE_DIR  = path.join(ROOT_DIR, "update");
-var DESTINATION_DIR  = path.join(ROOT_DIR, "update", "build");
+var DESTINATION_DIR  = path.join(ROOT_DIR, "update", "temp");
 
 console.log ("========> HOOK: BUILD UPDATE");
 
@@ -30,17 +30,13 @@ if (false === fs.existsSync(SOURCE_DIR)) {
 }
 
 /*
-    1. Check output exists
-    2. Cleanup output directory
+    1. Cleanup temp directory
+    2. Check temp exists
     3. Copy all .html files
     4. Browserify each .js in source directory
-    5. TODO: Zip all files to update.zip
-    6. TODO: Remove everything but .zip
 */
-Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR)
-    .then(function(){ return Q.nfcall(fs.readdir, DESTINATION_DIR); })
-    .then(createFileExtensionFilter(DESTINATION_DIR, ".*"))
-    .then(deleteFiles.bind(undefined, DESTINATION_DIR))
+Q.nfcall(rimraf, DESTINATION_DIR)
+    .then(function(){return Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR);})
     .then(function(){return copyHTML(SOURCE_DIR, DESTINATION_DIR);})
     .then(function(numCopied){
         console.log(numCopied + " app files copied.");
