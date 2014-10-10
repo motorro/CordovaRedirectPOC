@@ -48,15 +48,13 @@ module.exports.copyFile = copyFile;
  * @returns {Promise}
  */
 function copyFiles(src, dst, files) {
-    return files.reduce(
-        function(soFar, file) {
-            var dstFile = path.join(dst, file);
-            return soFar
-                .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, path.dirname(dstFile))})
-                .then(function(){return copyFile(path.join(src, file), dstFile)})
-        },
-        Q()
-    ).then(function(){
+    var doCopy = function (soFar, file) {
+        var dstFile = path.join(dst, file);
+        return soFar
+            .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, path.dirname(dstFile))})
+            .then(function(){return copyFile(path.join(src, file), dstFile)});
+    };
+    return files.reduce(doCopy, Q()).then(function(){
         return files.length;
     });
 }
@@ -70,21 +68,22 @@ module.exports.copyFiles = copyFiles;
  * @returns {Promise}
  */
 function browserifyFiles(src, dst, files) {
-    return files.reduce(
-        function(soFar, file) {
-            return Q.nfcall(
-                exec,
-                ["browserify", path.join(src, file), ">", path.join(dst, file)].join(" ")
-            ).then(function(result) {
+    var doBrowserify = function(soFar, file) {
+        return soFar
+            .then(function() {
+                return Q.nfcall(
+                    exec,
+                    ["browserify", path.join(src, file), ">", path.join(dst, file)].join(" ")
+                );
+            })
+            .then(function(result) {
                 var stdout = result && result[0];
                 if (stdout) console.log(stdout);
-                return true;
-            })
-        },
-        Q()
-    ).then(function(){
-            return files.length;
-        });
+            });
+    };
+    return files.reduce(doBrowserify, Q()).then(function(){
+        return files.length;
+    });
 }
 module.exports.browserifyFiles = browserifyFiles;
 
