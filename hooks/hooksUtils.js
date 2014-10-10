@@ -70,7 +70,7 @@ function readDirRecursive(dir, callback) {
         });
     }
 }
-exports.readDirRecursive = readDirRecursive;
+module.exports.readDirRecursive = readDirRecursive;
 
     /**
  * Creates directory recursively
@@ -108,7 +108,7 @@ function createDirRecursive(dir, callback, mode) {
         fs.mkdir(currentDir, mode, createStep);
     });
 }
-exports.createDirRecursive = createDirRecursive;
+module.exports.createDirRecursive = createDirRecursive;
 
 /**
  * Ensures that given directory exists
@@ -125,4 +125,4 @@ function ensureDirExists (dir, callback, mode) {
         createDirRecursive(dir, callback, mode);
     });
 }
-exports.ensureDirExists = ensureDirExists;
+module.exports.ensureDirExists = ensureDirExists;

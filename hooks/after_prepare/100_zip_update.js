@@ -9,7 +9,6 @@
 
 var fs = require('fs');
 var path = require('path');
-var archiver = require("archiver");
 var Q = require("q");
 var rimraf = require('rimraf');
 
@@ -19,6 +18,7 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
     : path.join(ROOT_DIR, "hooks");
 
 var hooksUtils = require([HOOKS_DIR, "hooksUtils"].join("/"));
+var hooksPromiseUtils = require([HOOKS_DIR, "hooksPromiseUtils"].join("/"));
 
 var TEMP_DIR  = path.join(ROOT_DIR, "update", "temp");
 var DESTINATION_DIR  = path.join(ROOT_DIR, "update", "build");
@@ -37,34 +37,10 @@ if (false === fs.existsSync(TEMP_DIR)) {
  */
 Q.nfcall(rimraf, DESTINATION_DIR)
     .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, DESTINATION_DIR);})
-    .then(function(){return zipFolder(TEMP_DIR, DESTINATION_FILE);})
+    .then(function(){return hooksPromiseUtils.zipFolder(TEMP_DIR, DESTINATION_FILE);})
     .then(function(bytes){
         console.log(["Done:", bytes, "written to", DESTINATION_FILE].join(" "));
     })
     .then(function(){return Q.nfcall(rimraf, TEMP_DIR);})
     .done();
 
-function zipFolder(source, file) {
-    var result = Q.defer();
-
-    var output = fs.createWriteStream(file);
-    output.on("error", function(err) {
-        result.reject(err);
-    });
-    output.on('close', function() {
-        result.resolve(zip.pointer());
-    });
-
-    var zip = archiver("zip");
-    output.on("error", function(err) {
-        result.reject(err);
-    });
-
-    zip.pipe(output);
-
-    zip.bulk([
-        { src: ['**/*'], cwd: source, expand: true }
-    ]).finalize();
-
-    return result.promise;
-}
