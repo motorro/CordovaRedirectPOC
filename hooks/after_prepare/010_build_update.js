@@ -9,6 +9,7 @@
  */
 var fs = require('fs');
 var path = require('path');
+var glob = require('glob');
 var exec = require('child_process').exec;
 var rimraf = require('rimraf');
 var Q = require("q");
@@ -20,8 +21,9 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
 
 var hooksutils = require([HOOKS_DIR, "hooksutils"].join("/"));
 
-var SOURCE_DIR  = path.join(ROOT_DIR, "update");
-var DESTINATION_DIR  = path.join(ROOT_DIR, "update", "temp");
+var SOURCE_DIR = path.join(ROOT_DIR, "update");
+var TEMP_DIR = path.join(SOURCE_DIR, "temp");
+var DESTINATION_DIR  = path.join(SOURCE_DIR, "build");
 
 console.log ("========> HOOK: BUILD UPDATE");
 
@@ -36,12 +38,18 @@ if (false === fs.existsSync(SOURCE_DIR)) {
     4. Browserify each .js in source directory
 */
 Q.nfcall(rimraf, DESTINATION_DIR)
-    .then(function(){return Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR);})
-    .then(function(){return copyHTML(SOURCE_DIR, DESTINATION_DIR);})
+    .then(function(){return Q.nfcall(rimraf, TEMP_DIR);})
+    .then(function(){return Q.nfcall(hooksutils.ensureDirExists, TEMP_DIR);})
+//    .then(function(){return copyHTML(TEMP_DIR, TEMP_DIR);})
+//    .then(function(numCopied){
+//        console.log(numCopied + " app files copied.");
+//    })
+    .then(function(){return Q.nfcall(glob, "**/*.!(js)", {cwd:SOURCE_DIR, nocase:true})})
+    .then(function(files){return copyFiles(SOURCE_DIR, TEMP_DIR, files);})
     .then(function(numCopied){
         console.log(numCopied + " app files copied.");
     })
-    .then(function(){return browserifySource(SOURCE_DIR, DESTINATION_DIR);})
+    .then(function(){return browserifySource(SOURCE_DIR, TEMP_DIR);})
     .then(function(numBuilt){
         console.log(numBuilt + " app sources built.")
     })
@@ -103,6 +111,27 @@ function copyFile(src, dst) {
 }
 
 /**
+ * Copies given file list from cwd to dst recreating folder structure
+ * @param src Source dir
+ * @param dst Destination dir
+ * @param files File list relative to source dir
+ * @returns {Promise}
+ */
+function copyFiles(src, dst, files) {
+    return files.reduce(
+        function(soFar, file) {
+            var dstFile = path.join(dst, file);
+            return soFar
+                .then(function(){return Q.nfcall(hooksutils.ensureDirExists, path.dirname(dstFile))})
+                .then(function(){return copyFile(path.join(src, file), dstFile)})
+        },
+        Q()
+    ).then(function(){
+        return files.length;
+    });
+}
+
+/**
  * Deletes passed files
  * @param dir Working dir
  * @param files Files to delete
@@ -114,28 +143,6 @@ function deleteFiles(dir, files) {
             return Q.nfcall(fs.unlink, path.join(dir, file));
         }
     ));
-}
-
-
-/**
- * Copies HTML files to output directory
- * @param src Source dir
- * @param dst Destination dir
- * @returns {Promise}
- */
-function copyHTML(src, dst) {
-    return Q.nfcall(fs.readdir, src)
-        .then(createFileExtensionFilter(src, ".html"))
-        .then(function(files) {
-            return Q.all(files.map(
-                function(file) {
-                    return copyFile(path.join(src, file), path.join(dst, file));
-                }
-            ));
-        })
-        .then(function(copied){
-            return copied.length;
-        });
 }
 
 /**

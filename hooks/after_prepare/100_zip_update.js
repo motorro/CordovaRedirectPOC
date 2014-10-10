@@ -20,13 +20,13 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
 
 var hooksutils = require([HOOKS_DIR, "hooksutils"].join("/"));
 
-var SOURCE_DIR  = path.join(ROOT_DIR, "update", "temp");
+var TEMP_DIR  = path.join(ROOT_DIR, "update", "temp");
 var DESTINATION_DIR  = path.join(ROOT_DIR, "update", "build");
 var DESTINATION_FILE  = path.join(DESTINATION_DIR, "update.zip");
 
 console.log ("========> HOOK: ZIP UPDATE");
 
-if (false === fs.existsSync(SOURCE_DIR)) {
+if (false === fs.existsSync(TEMP_DIR)) {
     console.log ("Update directory not found");
     return;
 }
@@ -37,11 +37,11 @@ if (false === fs.existsSync(SOURCE_DIR)) {
  */
 Q.nfcall(rimraf, DESTINATION_DIR)
     .then(function(){return Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR);})
-    .then(function(){return zipFolder(SOURCE_DIR, DESTINATION_FILE);})
+    .then(function(){return zipFolder(TEMP_DIR, DESTINATION_FILE);})
     .then(function(bytes){
         console.log(["Done:", bytes, "written to", DESTINATION_FILE].join(" "));
     })
-    .then(function(){return Q.nfcall(rimraf, SOURCE_DIR);})
+    .then(function(){return Q.nfcall(rimraf, TEMP_DIR);})
     .done();
 
 function zipFolder(source, file) {
