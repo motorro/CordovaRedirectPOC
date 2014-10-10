@@ -40,16 +40,13 @@ if (false === fs.existsSync(SOURCE_DIR)) {
 Q.nfcall(rimraf, DESTINATION_DIR)
     .then(function(){return Q.nfcall(rimraf, TEMP_DIR);})
     .then(function(){return Q.nfcall(hooksutils.ensureDirExists, TEMP_DIR);})
-//    .then(function(){return copyHTML(TEMP_DIR, TEMP_DIR);})
-//    .then(function(numCopied){
-//        console.log(numCopied + " app files copied.");
-//    })
     .then(function(){return Q.nfcall(glob, "**/*.!(js)", {cwd:SOURCE_DIR, nocase:true})})
     .then(function(files){return copyFiles(SOURCE_DIR, TEMP_DIR, files);})
     .then(function(numCopied){
         console.log(numCopied + " app files copied.");
     })
-    .then(function(){return browserifySource(SOURCE_DIR, TEMP_DIR);})
+    .then(function(){return Q.nfcall(glob, "*.js", {cwd:SOURCE_DIR, nocase:true})})
+    .then(function(files){return browserifyFiles(SOURCE_DIR, TEMP_DIR, files);})
     .then(function(numBuilt){
         console.log(numBuilt + " app sources built.")
     })
@@ -132,43 +129,26 @@ function copyFiles(src, dst, files) {
 }
 
 /**
- * Deletes passed files
- * @param dir Working dir
- * @param files Files to delete
- * @returns {Promise}
- */
-function deleteFiles(dir, files) {
-    return Q.all(files.map(
-        function(file) {
-            return Q.nfcall(fs.unlink, path.join(dir, file));
-        }
-    ));
-}
-
-/**
- * Browserifies each file in source directory
+ * Browserifies each .js file in source directory
  * @param src Source dir
  * @param dst Destination dir
+ * @param files File list relative to source dir
  * @returns {Promise}
  */
-function browserifySource(src, dst) {
-    return Q.nfcall(fs.readdir, src)
-        .then(createFileExtensionFilter(src, ".js"))
-        .then(function(files) {
-            return Q.all(files.map(
-                function(file) {
-                    return Q.nfcall(
-                        exec,
-                        ["browserify", path.join(src, file), ">", path.join(dst, file)].join(" ")
-                    ).then(function(result) {
-                        var stdout = result && result[0];
-                        if (stdout) console.log(stdout);
-                        return true;
-                    })
-                }
-            ));
-        })
-        .then(function(built){
-            return built.length;
-        });
+function browserifyFiles(src, dst, files) {
+    return files.reduce(
+        function(soFar, file) {
+            return Q.nfcall(
+                exec,
+                ["browserify", path.join(src, file), ">", path.join(dst, file)].join(" ")
+            ).then(function(result) {
+                var stdout = result && result[0];
+                if (stdout) console.log(stdout);
+                return true;
+            })
+        },
+        Q()
+    ).then(function(){
+        return files.length;
+    });
 }
