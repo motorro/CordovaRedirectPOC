@@ -18,7 +18,7 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
     ? path.dirname(path.dirname(process.env["CORDOVA_HOOK"]))
     : path.join(ROOT_DIR, "hooks");
 
-var hooksutils = require([HOOKS_DIR, "hooksutils"].join("/"));
+var hooksUtils = require([HOOKS_DIR, "hooksUtils"].join("/"));
 
 var TEMP_DIR  = path.join(ROOT_DIR, "update", "temp");
 var DESTINATION_DIR  = path.join(ROOT_DIR, "update", "build");
@@ -36,7 +36,7 @@ if (false === fs.existsSync(TEMP_DIR)) {
  2. Remove temp directory
  */
 Q.nfcall(rimraf, DESTINATION_DIR)
-    .then(function(){return Q.nfcall(hooksutils.ensureDirExists, DESTINATION_DIR);})
+    .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, DESTINATION_DIR);})
     .then(function(){return zipFolder(TEMP_DIR, DESTINATION_FILE);})
     .then(function(bytes){
         console.log(["Done:", bytes, "written to", DESTINATION_FILE].join(" "));

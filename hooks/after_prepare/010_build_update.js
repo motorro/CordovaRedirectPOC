@@ -19,7 +19,7 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
     ? path.dirname(path.dirname(process.env["CORDOVA_HOOK"]))
     : path.join(ROOT_DIR, "hooks");
 
-var hooksutils = require([HOOKS_DIR, "hooksutils"].join("/"));
+var hooksUtils = require([HOOKS_DIR, "hooksUtils"].join("/"));
 
 var SOURCE_DIR = path.join(ROOT_DIR, "update");
 var TEMP_DIR = path.join(SOURCE_DIR, "temp");
@@ -39,7 +39,7 @@ if (false === fs.existsSync(SOURCE_DIR)) {
 */
 Q.nfcall(rimraf, DESTINATION_DIR)
     .then(function(){return Q.nfcall(rimraf, TEMP_DIR);})
-    .then(function(){return Q.nfcall(hooksutils.ensureDirExists, TEMP_DIR);})
+    .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, TEMP_DIR);})
     .then(function(){return Q.nfcall(glob, "**/*.!(js)", {cwd:SOURCE_DIR, nocase:true})})
     .then(function(files){return copyFiles(SOURCE_DIR, TEMP_DIR, files);})
     .then(function(numCopied){
@@ -119,7 +119,7 @@ function copyFiles(src, dst, files) {
         function(soFar, file) {
             var dstFile = path.join(dst, file);
             return soFar
-                .then(function(){return Q.nfcall(hooksutils.ensureDirExists, path.dirname(dstFile))})
+                .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, path.dirname(dstFile))})
                 .then(function(){return copyFile(path.join(src, file), dstFile)})
         },
         Q()

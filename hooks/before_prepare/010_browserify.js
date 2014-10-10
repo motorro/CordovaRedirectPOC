@@ -15,7 +15,7 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
     ? path.dirname(path.dirname(process.env["CORDOVA_HOOK"]))
     : path.join(ROOT_DIR, "hooks");
 
-var hooksutils = require([HOOKS_DIR, "hooksutils"].join("/"));
+var hooksUtils = require([HOOKS_DIR, "hooksUtils"].join("/"));
 
 var SOURCE_DIR  = path.join(ROOT_DIR, "app");
 var DESTINATION_DIR  = path.join(ROOT_DIR, "www", "build");
@@ -27,7 +27,7 @@ if (false === fs.existsSync(SOURCE_DIR)) {
 }
 
 // Create output directory
-hooksutils.ensureDirExists(DESTINATION_DIR, function(err) {
+hooksUtils.ensureDirExists(DESTINATION_DIR, function(err) {
     if (err) throw err;
     browserifySource(SOURCE_DIR, DESTINATION_DIR, function(err, appNumber) {
         if (err) throw err;
