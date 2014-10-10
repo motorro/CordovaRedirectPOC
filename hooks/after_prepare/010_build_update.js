@@ -2,17 +2,15 @@
 
 /**
  * Builds update application
- * TODO: Use gulp - this is just a Q exercise :)
  * User: motorro
  * Date: 28.09.2014
  * Time: 7:50
  */
 var fs = require('fs');
 var path = require('path');
-var glob = require('glob');
-var exec = require('child_process').exec;
-var rimraf = require('rimraf');
 var Q = require("q");
+var glob = require('glob');
+var rimraf = require('rimraf');
 
 var ROOT_DIR    = process.argv[2];
 var HOOKS_DIR   = process.env["CORDOVA_HOOK"]

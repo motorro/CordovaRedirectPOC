@@ -18,7 +18,7 @@ var os=require('os');
 var ROOT_DIR = process.argv[2];
 var PLACE_TO = [
     // Update
-    "../update/build/index.html",
+    "../update/temp/index.html",
     // Android
     "android/assets/www/preloader.html",
     "android/assets/www/index.html",

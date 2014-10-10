@@ -8,7 +8,9 @@
  */
 var fs = require('fs');
 var path = require('path');
-var exec = require('child_process').exec;
+var Q = require("q");
+var glob = require('glob');
+var rimraf = require('rimraf');
 
 var ROOT_DIR    = process.argv[2];
 var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
@@ -16,6 +18,7 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
     : path.join(ROOT_DIR, "hooks");
 
 var hooksUtils = require([HOOKS_DIR, "hooksUtils"].join("/"));
+var hooksPromiseUtils = require([HOOKS_DIR, "hooksPromiseUtils"].join("/"));
 
 var SOURCE_DIR  = path.join(ROOT_DIR, "app");
 var DESTINATION_DIR  = path.join(ROOT_DIR, "www", "build");
@@ -26,72 +29,16 @@ if (false === fs.existsSync(SOURCE_DIR)) {
     throw new Error("Source directory not found!");
 }
 
-// Create output directory
-hooksUtils.ensureDirExists(DESTINATION_DIR, function(err) {
-    if (err) throw err;
-    browserifySource(SOURCE_DIR, DESTINATION_DIR, function(err, appNumber) {
-        if (err) throw err;
-        console.log(appNumber + " applications built. Done!");
-    });
-});
-
-/**
- * Browserifies each file in source directory
- * @param src Source dir
- * @param dst Destination dir
- * @param callback Result callback
+/*
+ 1. Cleanup build directory
+ 2. Check build exists
+ 3. Browserify each .js in source directory
  */
-function browserifySource(src, dst, callback) {
-    fs.readdir(src, function(err, files) {
-        if (err) {
-            callback(err);
-            return;
-        }
-//        process.chdir(HOOKS_DIR);
-        var moreToGo = files.length;
-        if (0 === moreToGo) {
-            callback(undefined, 0);
-            return;
-        }
-
-        var hasErrors = false;
-        var processed = 0;
-
-        files.forEach(function(file) {
-            if (".js" !== path.extname(file)) {
-                decrementToGoAndCheckFinished();
-                return;
-            }
-            var fullPath = path.join(src, file);
-            fs.stat(fullPath, function(err, stat) {
-                if (hasErrors) {
-                    return;
-                }
-                if (err) {
-                    callback(err);
-                    return;
-                }
-                if (stat.isDirectory()) {
-                    decrementToGoAndCheckFinished();
-                    return;
-                }
-                exec (
-                    ["browserify", fullPath, ">", path.join(dst, file)].join(" "),
-                    function(error, stdout, stderr){
-                        if (error) throw error;
-                        ++processed;
-                        decrementToGoAndCheckFinished();
-                    }
-                );
-            });
-        });
-
-        function decrementToGoAndCheckFinished() {
-            --moreToGo;
-            if (0 === moreToGo) {
-                callback(undefined, processed);
-            }
-        }
-    });
-
-}
+Q.nfcall(rimraf, DESTINATION_DIR)
+    .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, DESTINATION_DIR);})
+    .then(function(){return Q.nfcall(glob, "*.js", {cwd:SOURCE_DIR, nocase:true})})
+    .then(function(files){return hooksPromiseUtils.browserifyFiles(SOURCE_DIR, DESTINATION_DIR, files);})
+    .then(function(numBuilt){
+        console.log(numBuilt + " applications built.")
+    })
+    .done();
