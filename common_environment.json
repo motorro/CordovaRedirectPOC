@@ -1,5 +1,5 @@
 {
     "development": {
-        "updateURL": "https://localhost"
+        "updateURL": "https://localhost/update.zip"
     }
 }
