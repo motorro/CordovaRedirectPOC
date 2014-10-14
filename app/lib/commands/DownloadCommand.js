@@ -77,3 +77,5 @@ DownloadCommand.abort = function() {
         this._ft.abort();
     }
 };
+
+module.exports = DownloadCommand;

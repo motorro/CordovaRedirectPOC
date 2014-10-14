@@ -13,7 +13,7 @@ var Q = require("q");
  * @param to Folder to put contents
  * @constructor
  */
-function DownloadCommand(from, to) {
+function UnzipCommand(from, to) {
     this._from = from;
     this._to = to;
 
@@ -24,7 +24,7 @@ function DownloadCommand(from, to) {
  * Runs a command
  * @returns {promise}
  */
-DownloadCommand.prototype.run = function() {
+UnzipCommand.prototype.run = function() {
     if (null !== this._result) {
         return this._result;
     }
@@ -57,3 +57,5 @@ DownloadCommand.prototype.run = function() {
 
     return promise;
 };
+
+module.exports = UnzipCommand;
