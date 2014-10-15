@@ -8,8 +8,8 @@
 "use strict";
 
 var Q = require("q");
-var Download = require("./DownloadCommand");
-var Unzip = require("./UnzipCommand");
+var Download = require("./commands/DownloadCommand");
+var Unzip = require("./commands/UnzipCommand");
 
 /*
   These are hardcoded update URL and update directory
@@ -29,12 +29,6 @@ var UPDATE_URL = "#{updateURL}";
  * @type {string}
  */
 var UPDATE_DIR = "update";
-
-/**
- * Update file name
- * @type {string}
- */
-var UPDATE_FILE = "update.zip";
 
 /**
  * Checks for updates, downloads and unpacks new updates
@@ -67,7 +61,7 @@ Updater.prototype.getLatestInstalledVersion = function() {
  * @returns {promise}
  */
 Updater.prototype.getLatestInstallURL = function() {
-    return this._getLatestInstallDirectory(false)
+    return this._getUpdateDirectory(LocalFileSystem.PERSISTENT)
     .then(
         function(dir){
             return dir && dir.toURL;
@@ -100,15 +94,40 @@ Updater.prototype.isUpdateAvailable = function() {
  * @returns {promise}
  */
 Updater.prototype.getUpdate = function() {
-    return this._getUpdateDownloadUrl()
+    var that = this;
+
+    // Progress will be reported as
+    // 75% of total - download phase
+    // 25% of total - unzip phase
+
+    var result = Q.defer();
+
+    this._cleanupTemporaryFiles()
+        .then(function(){
+            return that._getUpdateDownloadUrl()
+        })
         .then(function(url){
             if (!url) {
                 throw new Error("No update available");
             }
-            var dc = new Download(url)
+
+            // TODO: Do we need quota here?
+            that._getUpdateDirectory(LocalFileSystem.TEMPORARY, true)
+                .then(function(temp) {
+                    return new Download(url, [temp, "update.zip"].join("/")).run();
+                })
+                .fail(function(reason) {
+                    result.reject(reason);
+                })
+
         })
-        .then()
+        .then(function(){
+            return that._getTempDirectory()
+        })
+        .then((function(){console.log("----->"); console.log(this)}).bind(this))
         .done();
+
+    return result.promise;
 };
 
 /**
@@ -131,46 +150,74 @@ Updater.prototype._getUpdateDownloadUrl = function() {
 };
 
 /**
- * Returns latest update directory
+ * Returns update directory in either persistent or temporary storage
+ * @param root Root type: temporary or persistent
  * @param [create] Optional creation flag
  * @default false
  * @returns {promise}
  */
-Updater.prototype._getLatestInstallDirectory = function(create) {
-    return this._getStorageRoot(0).then(function(root) {
+Updater.prototype._getUpdateDirectory = function(root, create, quota) {
+    if (null == create) create = false;
+    if (null == quota) quota = 0;
+    if (!create) quota = 0;
+    return this._getStorageRoot(root, quota).then(function(root) {
         var result = Q.defer();
         root.getDirectory(
             UPDATE_DIR,
             {create: create},
-            function(entry) {
-                result.resolve(entry);
-            },
-            function(err) {
-                result.reject(err);
-            }
+            result.resolve,
+            result.reject
         );
         return result.promise;
     });
 };
 
 /**
- * Requests persistent storage root
+ * Cleans up storage folders of temporary update files - download and extracted zip (if found)
+ * @returns {promise}
+ */
+Updater.prototype._cleanupTemporaryFiles = function() {
+    return this._getUpdateDirectory(LocalFileSystem.TEMPORARY)
+        .then(
+            function(dirEntry){
+                var result = Q.defer();
+                dirEntry.removeRecursively(
+                    result.resolve,
+                    result.reject
+                );
+                return result.promise;
+            },
+            function(reason){
+                // Directory was not found
+                // Consider as non-error
+                if (1 === (reason && reason.code)) {
+                    return undefined;
+                }
+                // Otherwise - rethrow
+                throw reason;
+            }
+        );
+};
+
+/**
+ * Requests storage root
+ * @param root Root type
  * @param [quota] Storage quota
  * @default 0
  * @returns {promise}
  * @private
  */
-Updater.prototype._getStorageRoot = function(quota) {
+Updater.prototype._getStorageRoot = function(root, quota) {
     quota = quota || 0;
     var result = Q.defer();
     window.requestFileSystem(
-        LocalFileSystem.PERSISTENT,
+        root,
         quota,
         function(filesystem) {
             result.resolve(filesystem.root);
         },
-        function(err) {
-            result.reject(err);
+        function(reason) {
+            result.reject(reason);
         }
     );
     return result.promise;
