@@ -61,7 +61,7 @@ Updater.prototype.getLatestInstalledVersion = function() {
  * @returns {promise}
  */
 Updater.prototype.getLatestInstallURL = function() {
-    return this._getUpdateDirectory(LocalFileSystem.PERSISTENT)
+    return this._getUpdateDirectory(window.LocalFileSystem.PERSISTENT)
     .then(
         function(dir){
             return dir && dir.toURL;
@@ -97,29 +97,44 @@ Updater.prototype.getUpdate = function() {
     var that = this;
 
     // Progress will be reported as
-    // 75% of total - download phase
-    // 25% of total - unzip phase
+    var progress = [
+        // 75% of total - download phase
+        {
+            name: "download",
+            volume: 0.75,
+            value: 0
+        },
+        // 25% of total - unzip phase
+        {
+            name: "unzip",
+            volume: 0.25,
+            value: 0
+        }
+    ];
 
     var result = Q.defer();
 
-    this._cleanupTemporaryFiles()
+    this._cleanupUpdateFiles(window.LocalFileSystem.TEMPORARY)
         .then(function(){
+            // 1. Get update URL
             return that._getUpdateDownloadUrl()
         })
-        .then(function(url){
+        .then(function(url) {
+            // 2. Check URL
             if (!url) {
                 throw new Error("No update available");
             }
 
-            // TODO: Do we need quota here?
-            that._getUpdateDirectory(LocalFileSystem.TEMPORARY, true)
+            // 3. Get temporary directory
+            return that._getUpdateDirectory(window.LocalFileSystem.TEMPORARY, true)
                 .then(function(temp) {
-                    return new Download(url, [temp, "update.zip"].join("/")).run();
+                    // 4. Download update
+                    return downloadUpdate(temp, url);
                 })
-                .fail(function(reason) {
-                    result.reject(reason);
+                .then(function(updateFile){
+                    // 5. Unzip files
+                    return unzipUpdate(temp, updateFile);
                 })
-
         })
         .then(function(){
             return that._getTempDirectory()
@@ -128,6 +143,69 @@ Updater.prototype.getUpdate = function() {
         .done();
 
     return result.promise;
+
+    /**
+     * Sends progress event based on
+     * @param percent
+     * @param stage
+     */
+    function sendProgress(percent, stage) {
+        result.notify(progress.reduce(
+            function (total, processedStage) {
+                if (stage === processedStage.name) {
+                    processedStage.value = percent;
+                }
+                return total + processedStage.value * processedStage.volume;
+            },
+            0
+        ));
+    }
+
+    /**
+     * Downloads update and handles progress that is being redispatch through master result
+     * @param tmpDir Temp directory entry
+     * @param url Update file URL
+     */
+    function downloadUpdate(tmpDir, url) {
+        var file = [tmpDir.toUrl(), "update.zip"].join("/");
+        var downloadPercent = 0;
+        return new Download(url, file).run()
+            .progress (function(progress) {
+                if (progress.lengthComputable) {
+                    downloadPercent = Math.round((progress.loaded / progress.total) * 100);
+                } else {
+                    downloadPercent += 10;
+                }
+                sendProgress(Math.min(downloadPercent, 100), "download");
+            });
+    }
+
+    /**
+     * Unzips update and handles progress that is being redispatch through master result
+     * @param tmpDir Temp directory entry
+     * @param file File entry to unzip
+     */
+    function unzipUpdate(tmpDir, file) {
+        return (function() {
+            // 1. Create directory to unzip files to
+            var result = Q.defer();
+            tmpDir.getDirectory(
+                "unzipped",
+                {create: true},
+                result.resolve,
+                result.reject
+            );
+            return result.promise;
+        })()
+        .then(function(unzipTo) {
+            // 2. Unzip files to temporary directory
+            return new Unzip(file.toUrl(), unzipTo.toUrl()).run()
+                .progress (function(progress) {
+                    sendProgress(Math.round((progress.loaded / progress.total) * 100), "unzip");
+                })
+                .thenResolve(unzipTo);
+        });
+    }
 };
 
 /**
@@ -148,6 +226,7 @@ Updater.prototype._getUpdateDownloadUrl = function() {
      */
     return Q(UPDATE_URL);
 };
+
 
 /**
  * Returns update directory in either persistent or temporary storage
@@ -173,11 +252,12 @@ Updater.prototype._getUpdateDirectory = function(root, create, quota) {
 };
 
 /**
- * Cleans up storage folders of temporary update files - download and extracted zip (if found)
+ * Cleans up storage folders of update files - either in temporary or persistent folder
+ * @param root Root type: temporary or persistent
  * @returns {promise}
  */
-Updater.prototype._cleanupTemporaryFiles = function() {
-    return this._getUpdateDirectory(LocalFileSystem.TEMPORARY)
+Updater.prototype._cleanupUpdateFiles = function(root) {
+    return this._getUpdateDirectory(root)
         .then(
             function(dirEntry){
                 var result = Q.defer();
