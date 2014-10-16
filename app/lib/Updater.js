@@ -232,6 +232,7 @@ Updater.prototype._getUpdateDownloadUrl = function() {
  * Returns update directory in either persistent or temporary storage
  * @param root Root type: temporary or persistent
  * @param [create] Optional creation flag
+ * @param [quota] Optional quota size
  * @default false
  * @returns {promise}
  */
