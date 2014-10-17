@@ -43,9 +43,22 @@ readyTrigger(function(){
  * 3) If not - redirect to package.html
  */
 function startWorkflow() {
-    var d = Q.defer();
-    d.resolve();
-    return d.promise;
+    log ("Starting update...");
+    var updateString = log ("Progress: 0%");
+    return updater.getUpdate()
+        .then(
+            function() {
+                log ("Update complete!");
+            },
+            function(reason) {
+                log ("Error getting update: " + reason.message);
+                console.log(reason);
+                throw reason;
+            },
+            function(progress) {
+                updateString = log(["Progress: ", progress, "%"].join(""), updateString);
+            }
+        );
 }
 
 /**
