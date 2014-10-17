@@ -126,6 +126,7 @@ Updater.prototype.getUpdate = function() {
             }
 
             // 3. Get temporary directory
+            // TODO: Do we need quota here?
             return that._getUpdateDirectory(window.LocalFileSystem.TEMPORARY, true)
                 .then(function(temp) {
                     // 4. Download update
@@ -136,11 +137,13 @@ Updater.prototype.getUpdate = function() {
                     return unzipUpdate(temp, updateFile);
                 })
         })
+        // 6. Move update to persistent storage
+        .then(moveUpdateToPersistentStorage)
         .then(function(){
-            return that._getTempDirectory()
+            // 7. Cleanup temporary files
+            return that._cleanupUpdateFiles(window.LocalFileSystem.TEMPORARY)
         })
-        .then((function(){console.log("----->"); console.log(this)}).bind(this))
-        .done();
+        .then(result.resolve, result.reject);
 
     return result.promise;
 
@@ -205,6 +208,21 @@ Updater.prototype.getUpdate = function() {
                 })
                 .thenResolve(unzipTo);
         });
+    }
+
+    /**
+     * Moves temporary update directory to persistent location
+     * @param tempUpdateDir
+     * @returns {*}
+     */
+    function moveUpdateToPersistentStorage(tempUpdateDir) {
+        // TODO: Do we need quota here?
+        return that._getStorageRoot(window.LocalFileSystem.PERSISTENT)
+            .then(function(persistentDir) {
+                var result = Q.defer();
+                tempUpdateDir.moveTo(persistentDir, UPDATE_DIR, result.resolve, result.reject);
+                return result.promise;
+            });
     }
 };
 
