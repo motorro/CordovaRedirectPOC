@@ -2,5 +2,5 @@
 /platforms
 /plugins/*
 node_modules
-/www/build
+/www
 /update/build

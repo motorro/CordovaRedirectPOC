@@ -8,15 +8,15 @@
 var Q = require("q");
 var log = undefined;
 
-Updater = require("./lib/Updater");
-Button = require("./lib/Button");
-readyTrigger = require("./lib/readyTrigger");
+Updater = require("../lib/Updater");
+Button = require("../lib/Button");
+readyTrigger = require("../lib/readyTrigger");
 
 /**
  * Entry point
  */
 readyTrigger(function(){
-    log = require("./lib/Logger").init(document.getElementById("log"));
+    log = require("../lib/Logger").init(document.getElementById("log"));
     log("Preloader initialized...");
 
     function runCommand(command) {
