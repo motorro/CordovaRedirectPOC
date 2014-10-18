@@ -64,12 +64,12 @@ Updater.prototype.getLatestInstallURL = function() {
     return this._getUpdateDirectory(window.LocalFileSystem.PERSISTENT)
     .then(
         function(dir){
-            return dir && dir.toURL;
+            return dir && dir.toURL();
         },
         function(reason) {
             // Directory was not found
             // Consider as non-error
-            if (1 === (reason && reason.code)) {
+            if (1 === (reason && reason.sourceError && reason.sourceError.code)) {
                 return undefined;
             }
             // Otherwise - rethrow
@@ -95,6 +95,9 @@ Updater.prototype.isUpdateAvailable = function() {
  */
 Updater.prototype.getUpdate = function() {
     var that = this;
+    var PERSISTENT_ROOT = window.LocalFileSystem.PERSISTENT;
+    var TEMPORARY_ROOT = window.LocalFileSystem.TEMPORARY;
+
 
     // Progress will be reported as
     var progress = [
@@ -112,9 +115,10 @@ Updater.prototype.getUpdate = function() {
         }
     ];
 
+
     var result = Q.defer();
 
-    this._cleanupUpdateFiles(window.LocalFileSystem.TEMPORARY)
+    that._cleanupUpdateFiles(TEMPORARY_ROOT)
         .then(function(){
             // 1. Get update URL
             return that._getUpdateDownloadUrl()
@@ -127,21 +131,21 @@ Updater.prototype.getUpdate = function() {
 
             // 3. Get temporary directory
             // TODO: Do we need quota here?
-            return that._getUpdateDirectory(window.LocalFileSystem.TEMPORARY, true)
+            return that._getUpdateDirectory(TEMPORARY_ROOT, true)
                 .then(function(temp) {
                     // 4. Download update
-                    return downloadUpdate(temp, url);
-                })
-                .then(function(updateFile){
-                    // 5. Unzip files
-                    return unzipUpdate(temp, updateFile);
-                })
+                    return downloadUpdate(temp, url)
+                        .then(function (updateFile) {
+                            // 5. Unzip files
+                            return unzipUpdate(temp, updateFile);
+                        });
+                });
         })
         // 6. Move update to persistent storage
         .then(moveUpdateToPersistentStorage)
         .then(function(){
             // 7. Cleanup temporary files
-            return that._cleanupUpdateFiles(window.LocalFileSystem.TEMPORARY)
+            return that._cleanupUpdateFiles(TEMPORARY_ROOT)
         })
         .then(result.resolve, result.reject);
 
@@ -170,7 +174,7 @@ Updater.prototype.getUpdate = function() {
      * @param url Update file URL
      */
     function downloadUpdate(tmpDir, url) {
-        var file = [tmpDir.toUrl(), "update.zip"].join("/");
+        var file = [tmpDir.toURL(), "update.zip"].join("/");
         var downloadPercent = 0;
         return new Download(url, file).run()
             .progress (function(progress) {
@@ -196,13 +200,13 @@ Updater.prototype.getUpdate = function() {
                 "unzipped",
                 {create: true},
                 result.resolve,
-                result.reject
+                rejectWithFileError.bind(undefined, result)
             );
             return result.promise;
         })()
         .then(function(unzipTo) {
             // 2. Unzip files to temporary directory
-            return new Unzip(file.toUrl(), unzipTo.toUrl()).run()
+            return new Unzip(file.toURL(), unzipTo.toURL()).run()
                 .progress (function(progress) {
                     sendProgress(Math.round((progress.loaded / progress.total) * 100), "unzip");
                 })
@@ -217,10 +221,21 @@ Updater.prototype.getUpdate = function() {
      */
     function moveUpdateToPersistentStorage(tempUpdateDir) {
         // TODO: Do we need quota here?
-        return that._getStorageRoot(window.LocalFileSystem.PERSISTENT)
+        // 1. Cleanup previously installed update
+        return that._cleanupUpdateFiles(PERSISTENT_ROOT)
+            .then(function(){
+                // 2. Get storage root
+                return that._getStorageRoot(PERSISTENT_ROOT)
+            })
             .then(function(persistentDir) {
+                // 3. Move files there
                 var result = Q.defer();
-                tempUpdateDir.moveTo(persistentDir, UPDATE_DIR, result.resolve, result.reject);
+                tempUpdateDir.moveTo(
+                    persistentDir,
+                    UPDATE_DIR,
+                    result.resolve,
+                    rejectWithFileError.bind(undefined, result)
+                );
                 return result.promise;
             });
     }
@@ -264,7 +279,7 @@ Updater.prototype._getUpdateDirectory = function(root, create, quota) {
             UPDATE_DIR,
             {create: create},
             result.resolve,
-            result.reject
+            rejectWithFileError.bind(undefined, result)
         );
         return result.promise;
     });
@@ -289,7 +304,7 @@ Updater.prototype._cleanupUpdateFiles = function(root) {
             function(reason){
                 // Directory was not found
                 // Consider as non-error
-                if (1 === (reason && reason.code)) {
+                if (1 === (reason && reason.sourceError && reason.sourceError.code)) {
                     return undefined;
                 }
                 // Otherwise - rethrow
@@ -315,11 +330,30 @@ Updater.prototype._getStorageRoot = function(root, quota) {
         function(filesystem) {
             result.resolve(filesystem.root);
         },
-        function(reason) {
-            result.reject(reason);
-        }
+        rejectWithFileError.bind(undefined, result)
     );
     return result.promise;
 };
 
 module.exports = Updater;
+
+/**
+ * Helper function to make file errors human-readable
+ * @param error
+ * @returns {Error}
+ */
+function createFileError(error) {
+    var code = error && error.code;
+    var result = new Error(["File system error:", code].join(" "));
+    result.sourceError = error;
+    return result;
+}
+
+/**
+ * Helper function to reject a deferred with file error
+ * @param deferred
+ * @param error
+ */
+function rejectWithFileError(deferred, error) {
+    deferred.reject(createFileError(error));
+}

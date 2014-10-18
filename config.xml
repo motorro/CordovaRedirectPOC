@@ -7,8 +7,7 @@
     <author email="motorro@gmail.com" href="https://github.com/motorro/CordovaRedirectPOC">
         motorro
     </author>
-    <!--<content src="preloader.html" />-->
-    <content src="index.html" />
+    <content src="preloader.html" />
     <access origin="*" />
 
     <feature name="Device">

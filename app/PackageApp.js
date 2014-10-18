@@ -45,6 +45,7 @@ readyTrigger(function(){
 function startWorkflow() {
     log ("Starting update...");
     var updateString = log ("Progress: 0%");
+    var updater = new Updater();
     return updater.getUpdate()
         .then(
             function() {

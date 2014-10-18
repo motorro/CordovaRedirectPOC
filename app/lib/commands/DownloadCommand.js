@@ -60,7 +60,15 @@ DownloadCommand.prototype.run = function() {
             result.resolve(entry);
         },
         function(error) {
-            result.reject(error);
+            // Transform Cordova error to common type
+            result.reject((function(e){
+                var result = e;
+                if (e instanceof FileTransferError) {
+                    result = new Error(e.exception && e.exception.toString());
+                    result.sourceError = e;
+                }
+                return result;
+            })(error));
         },
         false,
         this._options
