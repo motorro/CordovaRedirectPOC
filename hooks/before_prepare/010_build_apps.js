@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Browserifies app directory
+ * Builds applications using 'release' or 'update' scheme
+ * Use 'cordova prepare' to make release build
+ * Use 'BUILD_TYPE="update" cordova prepare' to build updates
  * User: motorro
- * Date: 28.09.2014
- * Time: 7:50
+ * Date: 18.10.2014
+ * Time: 17:50
  */
 var fs = require('fs');
 var path = require('path');
@@ -24,7 +26,7 @@ var SOURCE_DIR  = path.join(ROOT_DIR, "app");
 var PRELOADER_DIR  = path.join(ROOT_DIR, "app", "preloader");
 var DESTINATION_DIR  = path.join(ROOT_DIR, "www");
 
-console.log ("========> HOOK: BROWSERIFY");
+console.log ("========> HOOK: BUILD APPS");
 
 if (false === fs.existsSync(SOURCE_DIR)) {
     throw new Error("Source directory not found!");
@@ -48,6 +50,10 @@ if ("update" !== process.env.BUILD_TYPE) {
 
 result.done();
 
+/**
+ * 1. Copy each .html in source directory
+ * 2. Browserify...
+ */
 function build(srcDir, dstDir) {
     return Q.nfcall(glob, "*.html", {cwd:srcDir, nocase:true})
         .then(function(files){return hooksPromiseUtils.copyFiles(srcDir, dstDir, files);})
@@ -59,12 +65,10 @@ function build(srcDir, dstDir) {
         });
 }
 
+/**
+ * Browserify each .js in source directory
+ */
 function browserify(srcDir, dstDir) {
-    /*
-     1. Cleanup build directory
-     2. Check build exists
-     3. Browserify each .js in source directory
-     */
     return Q.nfcall(hooksUtils.ensureDirExists, dstDir)
         .then(function(){return Q.nfcall(glob, "*.js", {cwd:srcDir, nocase:true})})
         .then(function(files){return hooksPromiseUtils.browserifyFiles(srcDir, dstDir, files);})
