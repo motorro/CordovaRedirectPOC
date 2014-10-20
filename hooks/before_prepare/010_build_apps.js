@@ -40,7 +40,8 @@ if (false === fs.existsSync(SOURCE_DIR)) {
 */
 var result = Q.nfcall(rimraf, DESTINATION_DIR)
     .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, DESTINATION_DIR);})
-    .then(function(){build(SOURCE_DIR, DESTINATION_DIR);});
+    .then(function(){build(SOURCE_DIR, DESTINATION_DIR);})
+    .done();
 
 if ("update" !== process.env.BUILD_TYPE) {
     result.then(function(){
