@@ -13,6 +13,7 @@ var path = require('path');
 var Q = require("q");
 var glob = require('glob');
 var rimraf = require('rimraf');
+var browserify = require('browserify');
 
 var ROOT_DIR    = process.argv[2];
 var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
@@ -22,14 +23,26 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
 var hooksUtils = require([HOOKS_DIR, "hooksUtils"].join("/"));
 var hooksPromiseUtils = require([HOOKS_DIR, "hooksPromiseUtils"].join("/"));
 
-var SOURCE_DIR  = path.join(ROOT_DIR, "app", "assets");
-var DESTINATION_DIR  = path.join(ROOT_DIR, "www", "assets");
+/**
+ * Assets folder and marker
+ */
+var ASSETS_NAME = "assets";
+var SOURCE_DIR  = path.join(ROOT_DIR, "app", ASSETS_NAME);
+var DESTINATION_DIR  = path.join(ROOT_DIR, "www", ASSETS_NAME);
 
 console.log ("========> HOOK: BUILD ASSETS");
 
 if (false === fs.existsSync(SOURCE_DIR)) {
     throw new Error("Source directory not found!");
 }
+
+
+var b = browserify();
+b.require(hooksUtils.streams.createStringStream("module.exports=[1,2,3]"));
+b.bundle().pipe(process.stdout);
+// TODO: Отэта нужно использовать для экспорта оверрайдов
+// Сформировать объект
+require('./vendor/angular/angular.js', {expose: 'assetOverrides'});
 
 /*
  1. Cleanup destination dir
@@ -39,13 +52,7 @@ if (false === fs.existsSync(SOURCE_DIR)) {
  */
 Q.nfcall(rimraf, DESTINATION_DIR)
     .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, DESTINATION_DIR);})
-    .then(function(){
-        if ("update" === process.env.BUILD_TYPE) {
-            return buildUpdateFileList(SOURCE_DIR);
-        } else {
-            return buildReleaseFileList(SOURCE_DIR);
-        }
-    })
+    .then(function(){return buildFileList(SOURCE_DIR)})
     .then(function(list){
         return Q.all([
             (function() {
@@ -57,6 +64,24 @@ Q.nfcall(rimraf, DESTINATION_DIR)
         ]);
     })
     .done();
+
+function buildFileList(srcDir) {
+    if ("update" === process.env.BUILD_TYPE) {
+        return Q.all([
+            buildReleaseFileList(path.join(SOURCE_DIR, "static")),
+            buildUpdateFileList(path.join(SOURCE_DIR, "dynamic"))
+        ]).then(function(lists){
+            return lists.reduce(
+                function(soFar, list){
+                    return soFar.concat(list);
+                },
+                []
+            );
+        });
+    } else {
+        return buildReleaseFileList(SOURCE_DIR);
+    }
+}
 
 /**
  * If in 'release' mode - copy all assets
@@ -72,5 +97,3 @@ function buildReleaseFileList(srcDir) {
 function buildUpdateFileList(srcDir) {
     return Q.nfcall(glob, "**/*.*", {cwd:srcDir});
 }
-
-

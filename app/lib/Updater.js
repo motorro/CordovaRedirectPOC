@@ -11,6 +11,23 @@ var Q = require("q");
 var Download = require("./commands/DownloadCommand");
 var Unzip = require("./commands/UnzipCommand");
 
+/**
+ * Built dynamic asset list
+ * @type {string}
+ */
+var ASSET_OVERRIDES = require('assetOverrides');
+
+/**
+ * Update package dynamic asset prefix
+ * @type {string}
+ */
+var OVERRIDE_ASSET_URL_PREFIX = "";
+/**
+ * Packaged app dynamic asset prefix
+ * @type {string}
+ */
+var PACKAGE_ASSET_URL_PREFIX  = cordova.file.applicationDirectory + OVERRIDE_ASSET_URL_PREFIX;
+
 /*
   These are hardcoded update URL and update directory
   Should be set from outside (I guess)
@@ -42,6 +59,41 @@ function Updater() {
         };
     })(this);
 }
+
+/**
+ * Resolves dynamic asset filename to packaged or updated file
+ * Resolved path is relative to index.html
+ * @param {string} asset Asset path relative to 'dynamic' folder
+ * @returns {string} Asset URL
+ */
+Updater.resolveAsset = function(asset) {
+    return (ASSET_OVERRIDES[asset] !== undefined ? OVERRIDE_ASSET_URL_PREFIX : PACKAGE_ASSET_URL_PREFIX) + asset;
+};
+
+/**
+ * Loads dynamic JavaScript asset
+ * @param {string} asset Asset path relative to 'dynamic' folder
+ */
+Updater.loadJsAsset = function(asset) {
+    asset = Updater.resolveAsset(asset);
+    var tag = document.createElement("script");
+    tag.setAttribute("type", "text/javascript");
+    tag.setAttribute("src", asset);
+    document.body.appendChild(tag);
+};
+
+/**
+ * Loads dynamic CSS asset
+ * @param {string} asset Asset path relative to 'dynamic' folder
+ */
+Updater.loadCssAsset = function(asset) {
+    asset = Updater.resolveAsset(asset);
+    var tag = document.createElement("script");
+    tag.setAttribute("rel", "stylesheet");
+    tag.setAttribute("type", "text/css");
+    tag.setAttribute("href", asset);
+    document.body.appendChild(tag);
+};
 
 /**
  * Returns the latest installed version
@@ -273,6 +325,10 @@ Updater.prototype._getUpdateDirectory = function(root, create, quota) {
     if (null == create) create = false;
     if (null == quota) quota = 0;
     if (!create) quota = 0;
+
+    // TODO: Use private directory
+    // window.resolveLocalFileSystemURL(cordova.file.dataDirectory, function(entry){console.log(entry);}, function(error){console.log(error);})
+
     return this._getStorageRoot(root, quota).then(function(root) {
         var result = Q.defer();
         root.getDirectory(
@@ -357,3 +413,4 @@ function createFileError(error) {
 function rejectWithFileError(deferred, error) {
     deferred.reject(createFileError(error));
 }
+
