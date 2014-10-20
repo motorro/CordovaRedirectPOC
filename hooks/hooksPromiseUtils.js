@@ -10,6 +10,7 @@ var fs = require('fs');
 var path = require('path');
 var exec = require('child_process').exec;
 var archiver = require("archiver");
+var browserify = require("browserify");
 var hooksUtils = require("./hooksUtils");
 
 /**
@@ -65,20 +66,39 @@ module.exports.copyFiles = copyFiles;
  * @param src Source dir
  * @param dst Destination dir
  * @param files File list relative to source dir
+ * @param [externals] External bundles
  * @returns {Promise}
  */
-function browserifyFiles(src, dst, files) {
+function browserifyFiles(src, dst, files, externals) {
+    var b = browserify({
+        basedir: src
+    });
+    if (Array.isArray(externals) && 0 !== externals.length) {
+        b.external(externals)
+    }
+
     var doBrowserify = function(soFar, file) {
         return soFar
             .then(function() {
-                return Q.nfcall(
-                    exec,
-                    ["browserify", path.join(src, file), ">", path.join(dst, file)].join(" ")
-                );
-            })
-            .then(function(result) {
-                var stdout = result && result[0];
-                if (stdout) console.log(stdout);
+                var result = Q.defer();
+
+                var output = fs.createWriteStream(path.join(dst, file));
+                output.on("error", function (err) {
+                    result.reject(err);
+                });
+                output.on('close', function () {
+                    result.resolve();
+                });
+
+                b.add([".", file].join("/"));
+
+                var bundle = b.bundle();
+                bundle.pipe(output);
+                bundle.on("error", function (err) {
+                    result.reject(err);
+                });
+
+                return result.promise;
             });
     };
     return files.reduce(doBrowserify, Q()).then(function(){
@@ -105,9 +125,6 @@ function zipFolder(src, dst) {
     });
 
     var zip = archiver("zip");
-    output.on("error", function(err) {
-        result.reject(err);
-    });
 
     zip.pipe(output);
 
