@@ -7,6 +7,8 @@
 
 var path = require('path');
 var fs = require('fs');
+var stream = require('stream');
+var util = require('util');
 
 /**
  * Reads dir recursively returning a file list to a callback
@@ -72,7 +74,7 @@ function readDirRecursive(dir, callback) {
 }
 module.exports.readDirRecursive = readDirRecursive;
 
-    /**
+/**
  * Creates directory recursively
  * @param dir Directory
  * @param callback Callback
@@ -126,3 +128,51 @@ function ensureDirExists (dir, callback, mode) {
     });
 }
 module.exports.ensureDirExists = ensureDirExists;
+
+
+module.exports.streams = (function(){
+
+    /**
+     * Transforms object stream to non-object
+     * Needed to use as an output to file streams
+     * @constructor
+     */
+    function ObjTransformStream() {
+        stream.Transform.call(this);
+
+        this._readableState.objectMode = false;
+        this._writableState.objectMode = true;
+    }
+    util.inherits(ObjTransformStream, stream.Transform);
+
+    ObjTransformStream.prototype._transform = function(obj, encoding, callback){
+        this.push(obj, encoding);
+        callback();
+    };
+
+    /**
+     * Transforms a string to a stream
+     * @param str
+     * @returns {*}
+     */
+    function createStringStream(str) {
+        var result = new stream.Readable({objectMode:true});
+        result.push(str);
+        result.push(null);
+        return result.pipe(new ObjTransformStream());
+    }
+
+    /**
+     * Transforms an object to stream using stringify
+     * @param obj
+     * @returns {*}
+     */
+    function createStringifyStream(obj) {
+        return createStringStream(JSON.stringify(obj));
+    }
+
+    return {
+        createStringStream: createStringStream,
+        createStringifyStream: createStringifyStream
+    }
+})();
