@@ -33,19 +33,6 @@ readyTrigger(function() {
     PACKAGE_ASSET_URL_PREFIX = cordova.file.applicationDirectory + OVERRIDE_ASSET_URL_PREFIX;
 });
 
-/*
-  These are hardcoded update URL and update directory
-  Should be set from outside (I guess)
-  For this demo it is being injected herewith a hook when building an app
- */
-
-/**
- * URL to check updates
- * (Merged with environment hook)
- * @type {string}
- */
-var UPDATE_URL = ["#{updateURL}", "/", cordova.platformId, ".zip"].join("");
-
 /**
  * Update directory name
  * @type {string}
@@ -319,11 +306,14 @@ Updater.prototype._getUpdateDownloadUrl = function() {
      2. Send it to server
      3. Get the result
      */
+
     /*
-     TODO: Download diff only
-     Sending a hash of existing files and downloading a diff with a latest version will help to save traffic
+     This is hardcoded update URL
+     Should be set from outside (I guess)
+     For this demo it is being injected here with a hook when building an app
      */
-    return Q(UPDATE_URL);
+
+    return Q(["#{updateURL}", "/", cordova.platformId, ".zip"].join(""));
 };
 
 
