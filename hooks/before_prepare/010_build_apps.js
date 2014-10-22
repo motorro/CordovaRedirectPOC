@@ -40,11 +40,10 @@ if (false === fs.existsSync(SOURCE_DIR)) {
 */
 var result = Q.nfcall(rimraf, DESTINATION_DIR)
     .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, DESTINATION_DIR);})
-    .then(function(){build(SOURCE_DIR, DESTINATION_DIR);})
-    .done();
+    .then(function(){build(SOURCE_DIR, DESTINATION_DIR);});
 
 if ("update" !== process.env.BUILD_TYPE) {
-    result.then(function(){
+    result = result.then(function(){
         return build(PRELOADER_DIR, DESTINATION_DIR);
     })
 }
@@ -62,17 +61,18 @@ function build(srcDir, dstDir) {
             console.log(numCopied + " HTMLs copied.")
         })
         .then(function(){
-            return browserify(srcDir, dstDir);
+            // Asset overrides are built using build_assets hook
+            return browserify(srcDir, dstDir, ["assetOverrides"]);
         });
 }
 
 /**
  * Browserify each .js in source directory
  */
-function browserify(srcDir, dstDir) {
+function browserify(srcDir, dstDir, externals) {
     return Q.nfcall(hooksUtils.ensureDirExists, dstDir)
         .then(function(){return Q.nfcall(glob, "*.js", {cwd:srcDir, nocase:true})})
-        .then(function(files){return hooksPromiseUtils.browserifyFiles(srcDir, dstDir, files);})
+        .then(function(files){return hooksPromiseUtils.browserifyFiles(srcDir, dstDir, files, externals);})
         .then(function(numBuilt){
             console.log(numBuilt + " applications built.")
         });
