@@ -10,6 +10,7 @@
 var Q = require("q");
 var Download = require("./commands/DownloadCommand");
 var Unzip = require("./commands/UnzipCommand");
+var fuse = require("./methodFuse").createFusedFunction;
 
 /**
  * Built dynamic asset list
@@ -39,7 +40,7 @@ var PACKAGE_ASSET_URL_PREFIX  = cordova.file.applicationDirectory + OVERRIDE_ASS
  * (Merged with environment hook)
  * @type {string}
  */
-var UPDATE_URL = "#{updateURL}";
+var UPDATE_URL = ["#{updateURL}", "/", cordova.platformId, ".zip"].join("");
 
 /**
  * Update directory name
@@ -53,6 +54,10 @@ var UPDATE_DIR = "update";
  * @constructor
  */
 function Updater() {
+
+    // Protect update method so it could be run once at a time
+    this.getUpdate = fuse(this._getUpdate, this);
+
     Updater = (function(updater) {
         return function () {
             return updater;
@@ -143,9 +148,11 @@ Updater.prototype.isUpdateAvailable = function() {
 
 /**
  * Downloads and installs the latest update
+ * The method is private. A fused instance is created in constructor
  * @returns {promise}
+ * @private
  */
-Updater.prototype.getUpdate = function() {
+Updater.prototype._getUpdate = function() {
     var that = this;
     var PERSISTENT_ROOT = window.LocalFileSystem.PERSISTENT;
     var TEMPORARY_ROOT = window.LocalFileSystem.TEMPORARY;

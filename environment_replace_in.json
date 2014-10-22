@@ -1,3 +1,4 @@
 [
-    "www/PackageApp.js"
+    "www/PackageApp.js",
+    "www/PreloaderApp.js"
 ]
