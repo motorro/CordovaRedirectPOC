@@ -8,9 +8,9 @@
 var Q = require("q");
 var log = undefined;
 
-Updater = require("../lib/Updater");
-Button = require("../lib/Button");
-readyTrigger = require("../lib/readyTrigger");
+var Updater = require("../lib/Updater");
+var Button = require("../lib/Button");
+var readyTrigger = require("../lib/readyTrigger");
 
 /**
  * Entry point

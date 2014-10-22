@@ -11,6 +11,7 @@ var Q = require("q");
 var Download = require("./commands/DownloadCommand");
 var Unzip = require("./commands/UnzipCommand");
 var fuse = require("./methodFuse").createFusedFunction;
+var readyTrigger = require("./readyTrigger");
 
 /**
  * Built dynamic asset list
@@ -22,12 +23,15 @@ var ASSET_OVERRIDES = require('assetOverrides');
  * Update package dynamic asset prefix
  * @type {string}
  */
-var OVERRIDE_ASSET_URL_PREFIX = "";
+var OVERRIDE_ASSET_URL_PREFIX = "assets/dynamic/";
 /**
  * Packaged app dynamic asset prefix
  * @type {string}
  */
-var PACKAGE_ASSET_URL_PREFIX  = cordova.file.applicationDirectory + OVERRIDE_ASSET_URL_PREFIX;
+var PACKAGE_ASSET_URL_PREFIX = undefined;
+readyTrigger(function() {
+    PACKAGE_ASSET_URL_PREFIX = cordova.file.applicationDirectory + OVERRIDE_ASSET_URL_PREFIX;
+});
 
 /*
   These are hardcoded update URL and update directory
@@ -72,6 +76,9 @@ function Updater() {
  * @returns {string} Asset URL
  */
 Updater.resolveAsset = function(asset) {
+    if (undefined === PACKAGE_ASSET_URL_PREFIX) {
+        throw (new Error("Package prefix is not defined. Check that cordova device is ready."));
+    }
     return (ASSET_OVERRIDES[asset] !== undefined ? OVERRIDE_ASSET_URL_PREFIX : PACKAGE_ASSET_URL_PREFIX) + asset;
 };
 
