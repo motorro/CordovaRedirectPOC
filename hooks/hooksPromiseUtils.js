@@ -4,6 +4,7 @@
  * Date: 10.10.2014
  * Time: 6:05
  */
+"use strict";
 
 var Q = require("q");
 var fs = require('fs');
@@ -116,21 +117,32 @@ module.exports.browserifyFiles = browserifyFiles;
 function zipFolder(src, dst) {
     var result = Q.defer();
 
-    var output = fs.createWriteStream(dst);
-    output.on("error", function(err) {
-        result.reject(err);
+    fs.exists(src, function(sourceExists) {
+        if (false === sourceExists) {
+            var error = new Error("ENOENT, zip " + src);
+            error.errno = 34;
+            error.code = "ENOENT";
+            error.path = src;
+            result.reject(err);
+            return;
+        }
+
+        var output = fs.createWriteStream(dst);
+        output.on("error", function(err) {
+            result.reject(err);
+        });
+        output.on('close', function() {
+            result.resolve(zip.pointer());
+        });
+
+        var zip = archiver("zip");
+
+        zip.pipe(output);
+
+        zip.bulk([
+            { src: ['**/*'], cwd: src, expand: true }
+        ]).finalize();
     });
-    output.on('close', function() {
-        result.resolve(zip.pointer());
-    });
-
-    var zip = archiver("zip");
-
-    zip.pipe(output);
-
-    zip.bulk([
-        { src: ['**/*'], cwd: src, expand: true }
-    ]).finalize();
 
     return result.promise;
 }

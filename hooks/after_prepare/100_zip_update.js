@@ -20,27 +20,37 @@ var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
 var hooksUtils = require([HOOKS_DIR, "hooksUtils"].join("/"));
 var hooksPromiseUtils = require([HOOKS_DIR, "hooksPromiseUtils"].join("/"));
 
+var PLATFORMS = hooksUtils.getPlatformsWww(ROOT_DIR);
+
 var TEMP_DIR  = path.join(ROOT_DIR, "update", "temp");
-var DESTINATION_DIR  = path.join(ROOT_DIR, "update", "build");
-var DESTINATION_FILE  = path.join(DESTINATION_DIR, "update.zip");
+var DESTINATION_DIR  = path.join(ROOT_DIR, "update");
 
 console.log ("========> HOOK: ZIP UPDATE");
 
-if (false === fs.existsSync(TEMP_DIR)) {
-    console.log ("Update directory not found");
-    return;
+if ("update" !== process.env.BUILD_TYPE) {
+    console.log ("Release build. Skipped...");
+    return
 }
 
-/*
- 1. Zip all files to update.zip
- 2. Remove temp directory
- */
 Q.nfcall(rimraf, DESTINATION_DIR)
-    .then(function(){return Q.nfcall(hooksUtils.ensureDirExists, DESTINATION_DIR);})
-    .then(function(){return hooksPromiseUtils.zipFolder(TEMP_DIR, DESTINATION_FILE);})
-    .then(function(bytes){
-        console.log(["Done:", bytes, "written to", DESTINATION_FILE].join(" "));
+    .then(function(){ return Q.nfcall(hooksUtils.ensureDirExists, DESTINATION_DIR); })
+    .then(function() {
+        var result = Q();
+        PLATFORMS.forEach(function(platform){
+            result.then(function(){ return hooksPromiseUtils.zipFolder(platform.path, path.join(DESTINATION_DIR, platform.name + ".zip")); })
+                .then(
+                    function(bytes){ console.log("Platform '" + platform.name + "' built. " + bytes + " written."); },
+                    undefined,
+                    function(reason) {
+                        if (34 === (reason && reason.errno)) {
+                            console.log("Platform '" + platform.name + "' skipped...");
+                            return;
+                        }
+                        throw(reason);
+                    }
+                );
+        });
+        return result;
     })
-    .then(function(){return Q.nfcall(rimraf, TEMP_DIR);})
     .done();
 

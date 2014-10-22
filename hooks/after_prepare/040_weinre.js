@@ -10,22 +10,18 @@
  * Date: 04.08.2014
  * Time: 20:27
  */
+"use strict";
 
 var fs = require('fs');
 var path = require('path');
 var os=require('os');
 
 var ROOT_DIR = process.argv[2];
-var PLACE_TO = [
-    // Update
-    "../update/temp/index.html",
-    // Android
-    "android/assets/www/preloader.html",
-    "android/assets/www/index.html",
-    // iOS
-    "ios/www/preloader.html",
-    "ios/www/index.html"
-];
+var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
+    ? path.dirname(path.dirname(process.env["CORDOVA_HOOK"]))
+    : path.join(ROOT_DIR, "hooks");
+
+var hooksUtils = require([HOOKS_DIR, "hooksUtils"].join("/"));
 
 var target = "development";
 if (process.env.TARGET) {
@@ -65,20 +61,21 @@ var ip = WEINRE[0] || (function() {
 })();
 var port = WEINRE[1] || 8090;
 
-var moreFilesToGo = PLACE_TO.length;
-var placeCallback = function() {
-    if (0 === --moreFilesToGo) {
-        console.log (["Weinre set to: ", ip, ":", port].join(""));
-    }
-};
-
-PLACE_TO.forEach(function(file) {
-    placeWeinre (
-        path.join(ROOT_DIR, "platforms", file),
-        ip,
-        port,
-        placeCallback
-    );
+hooksUtils.globInPlatformsWww(ROOT_DIR, "**/*.html", function (err, files) {
+    if (err) throw err;
+    (function placeToFile() {
+        var file = files.pop();
+        if (undefined === file) {
+            console.log (["Weinre set to: ", ip, ":", port].join(""));
+            return;
+        }
+        placeWeinre (
+            file,
+            ip,
+            port,
+            placeToFile
+        );
+    })();
 });
 
 /**

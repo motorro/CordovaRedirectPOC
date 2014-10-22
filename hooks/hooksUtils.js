@@ -4,11 +4,13 @@
  * Date: 05.06.2014
  * Time: 9:22
  */
+"use strict";
 
 var path = require('path');
 var fs = require('fs');
 var stream = require('stream');
 var util = require('util');
+var glob = require('glob');
 
 /**
  * Reads dir recursively returning a file list to a callback
@@ -82,7 +84,7 @@ module.exports.readDirRecursive = readDirRecursive;
  */
 function createDirRecursive(dir, callback, mode) {
     dir = path.normalize(dir);
-    mode = mode || 0777;
+    mode = mode || 511;
     var currentDir = null;
     var toCreate = [];
 
@@ -129,6 +131,67 @@ function ensureDirExists (dir, callback, mode) {
 }
 module.exports.ensureDirExists = ensureDirExists;
 
+/**
+ * Returns an array of platform www dirs
+ * @param projectRoot Project root dir
+ */
+function getPlatformsWww(projectRoot) {
+    var platforms = process.env.CORDOVA_PLATFORMS.split(",");
+    return platforms.map(function(platform){
+        var platformRoot = path.join(projectRoot, "platforms", platform);
+        return {
+            name: platform,
+            path: (function () {
+                switch (platform.toLowerCase()) {
+                    case "android":
+                        return path.join(platformRoot, 'assets', 'www');
+                    case "ios":
+                        return path.join(platformRoot, 'www');
+                    case "browser":
+                        return path.join(platformRoot, 'www');
+                    default:
+                        throw new Error("Unknown platform " + platform + ". Add it to hooksUtils.js if you need it...");
+                }
+            })()
+        };
+    });
+}
+module.exports.getPlatformsWww = getPlatformsWww;
+
+/**
+ * Performs a glob in installed platform www dirs
+ * @param projectRoot
+ * @param pattern
+ * @param callback
+ */
+function globInPlatformsWww(projectRoot, pattern, callback) {
+    var platforms;
+    try {
+        platforms = getPlatformsWww(projectRoot);
+    } catch(e) {
+        callback(e);
+        return;
+    }
+    var result = [];
+    (function globPlatform(){
+        var platform = platforms.pop();
+        if (undefined === platform) {
+            callback(null, result);
+            return;
+        }
+        glob(pattern, {cwd:platform.path}, function(err, files) {
+            if (err) {
+                callback(err);
+                return;
+            }
+            result = result.concat(files.map(function(file){
+                return path.join(platform.path, file);
+            }));
+            globPlatform();
+        });
+    })();
+}
+module.exports.globInPlatformsWww = globInPlatformsWww;
 
 module.exports.streams = (function(){
 

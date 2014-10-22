@@ -57,20 +57,19 @@ var environment = (function(){
     return result;
 })(common_environment, private_environment);
 
-var moreFilesToGo = REPLACE_IN.length;
-var replaceCallback = function() {
-    if (0 === --moreFilesToGo) {
-        console.log ("Environment merged...");
-    }
-};
 
-REPLACE_IN.forEach(function(file) {
+(function mergeToFile() {
+    var file = REPLACE_IN.pop();
+    if (undefined === file) {
+        console.log ("Environment merged...");
+        return;
+    }
     replaceStringsInFile (
         path.join(ROOT_DIR, file),
         environment,
-        replaceCallback
+        mergeToFile
     );
-});
+})();
 
 /**
  * Replaces placeholders with values in file
