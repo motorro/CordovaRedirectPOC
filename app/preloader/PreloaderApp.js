@@ -79,6 +79,15 @@ function startWorkflow() {
  * Deletes update package if present
  */
 function resetApplication() {
-
+    var updater = new Updater();
+    return updater.reset()
+        .then(function(){
+            log ("Updates removed...");
+        })
+        .fail(function(reason) {
+            log("Error removing update: " + reason.message);
+            console.log(reason);
+            throw reason;
+        });
 }
 

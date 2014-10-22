@@ -141,6 +141,14 @@ Updater.prototype.isUpdateAvailable = function() {
 };
 
 /**
+ * Cleans up all available updates
+ * @returns {promise}
+ */
+Updater.prototype.reset = function() {
+    return this._cleanupUpdateFiles(window.LocalFileSystem.PERSISTENT);
+};
+
+/**
  * Downloads and installs the latest update
  * The method is private. A fused instance is created in constructor
  * @returns {promise}
