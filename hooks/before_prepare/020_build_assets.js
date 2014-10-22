@@ -14,6 +14,7 @@ var Q = require("q");
 var glob = require('glob');
 var rimraf = require('rimraf');
 var browserify = require('browserify');
+var exec = require('child_process').exec;
 
 var ROOT_DIR    = process.argv[2];
 var HOOKS_DIR   = process.env["CORDOVA_HOOK"]
@@ -29,6 +30,7 @@ var hooksPromiseUtils = require([HOOKS_DIR, "hooksPromiseUtils"].join("/"));
 var ASSETS_NAME = "assets";
 var SOURCE_DIR  = path.join(ROOT_DIR, "app", ASSETS_NAME);
 var DESTINATION_DIR  = path.join(ROOT_DIR, "www", ASSETS_NAME);
+var RELEASE_TAG_PATTERN = "r*";
 
 console.log ("========> HOOK: BUILD ASSETS");
 
@@ -97,7 +99,35 @@ function buildReleaseFileList(srcDir) {
  * that has been changed since the last release tag
  */
 function buildUpdateFileList(srcDir) {
-    return Q.nfcall(glob, "**/*.*", {cwd:srcDir});
+    /*
+     1. Describe the current commit since the last tag matching the RELEASE_TAG_PATTERN
+     If release tag was not found - the function will reject. That is considered Ok since why do you need an update then?
+     2. Get files changed since that commit srcDir folder
+     3. Build file list using this files
+     */
+    var commitsRe = /-(\d+)-g[0-9a-f]+$/im;
+
+    return Q.nfcall(exec, "git describe --match " + RELEASE_TAG_PATTERN)
+        .spread(function(stdout) {
+            // Find number of commits since the last tag
+            var test = commitsRe.exec(stdout.trim());
+            var commitsSince = (null !== test && parseInt(test[1], 10)) || 0;
+            console.log(["You are", commitsSince, "commits since last release tag."].join(" "));
+            return commitsSince;
+        })
+        .then(function(commits){
+            if (0 === commits) {
+                return [];
+            }
+            return Q.nfcall(exec, ["git diff HEAD~", commits, " --name-only --diff-filter=ACMR ", srcDir].join(""))
+                .spread(function(stdout){
+                    return stdout.trim().split(/[\n]/).filter(function(name){ return "" !== name.trim(); });
+                })
+        })
+        .then(function(files) {
+            console.log(files.length + " files changed since last release tag.");
+            return files;
+        });
 }
 
 /**

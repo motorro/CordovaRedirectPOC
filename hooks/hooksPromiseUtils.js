@@ -9,7 +9,6 @@
 var Q = require("q");
 var fs = require('fs');
 var path = require('path');
-var exec = require('child_process').exec;
 var archiver = require("archiver");
 var browserify = require("browserify");
 var hooksUtils = require("./hooksUtils");
