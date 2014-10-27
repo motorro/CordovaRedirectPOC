@@ -63,6 +63,9 @@ function Updater() {
 Updater.resolveAsset = function(asset) {
     if (null == PACKAGE_ASSET_URL_PREFIX) {
         var cordovaAppPath = cordova && cordova.file && cordova.file.applicationDirectory;
+        if (null == cordovaAppPath) {
+            throw (new Error("Package prefix is not defined. Check that cordova device is ready."));
+        }
         PACKAGE_ASSET_URL_PREFIX = cordovaAppPath + "www/" + OVERRIDE_ASSET_URL_PREFIX;
     }
     return (ASSET_OVERRIDES[asset] !== undefined ? OVERRIDE_ASSET_URL_PREFIX : PACKAGE_ASSET_URL_PREFIX) + asset;
