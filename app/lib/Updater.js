@@ -63,10 +63,7 @@ function Updater() {
 Updater.resolveAsset = function(asset) {
     if (null == PACKAGE_ASSET_URL_PREFIX) {
         var cordovaAppPath = cordova && cordova.file && cordova.file.applicationDirectory;
-        if (null == PACKAGE_ASSET_URL_PREFIX) {
-            throw (new Error("Package prefix is not defined. Check that cordova device is ready."));
-        }
-        PACKAGE_ASSET_URL_PREFIX = cordovaAppPath + OVERRIDE_ASSET_URL_PREFIX;
+        PACKAGE_ASSET_URL_PREFIX = cordovaAppPath + "www/" + OVERRIDE_ASSET_URL_PREFIX;
     }
     return (ASSET_OVERRIDES[asset] !== undefined ? OVERRIDE_ASSET_URL_PREFIX : PACKAGE_ASSET_URL_PREFIX) + asset;
 };
@@ -93,7 +90,7 @@ Updater.loadCssAsset = function(asset) {
     tag.setAttribute("rel", "stylesheet");
     tag.setAttribute("type", "text/css");
     tag.setAttribute("href", asset);
-    document.body.appendChild(tag);
+    document.head.appendChild(tag);
 };
 
 /**

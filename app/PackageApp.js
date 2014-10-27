@@ -34,7 +34,41 @@ readyTrigger(function(){
     var preloaderButton = new Button("preloader", function() {
         runCommand(toPreloader);
     });
+
+    processAssets();
 });
+
+/**
+ * Demonstrates asset management
+ */
+function processAssets() {
+    // 1. Load dynamic CSS
+    Updater.loadCssAsset("css/dynamic_style.css");
+    // 2. Load dynamic JavaScript
+    Updater.loadJsAsset("js/dynamic_js.js");
+
+    // Use dynamic images
+    // 1. Shows updated image - the one that has changed since last release
+    setDynamicBg(".dynamic-background", "img/dynamic_img.jpg");
+    // 2. Shows image from the packaged app - as soon as it remains the same
+    setDynamicBg(".dynamic-css", "img/dynamic_img_that_wasnt_updated.png");
+
+    /**
+     * Set dynamic CSS background
+     * @param selector
+     * @param asset
+     */
+    function setDynamicBg(selector, asset) {
+        // Uses dynamically generated 'assetOverrides'
+        // to get images from within 'dynamic' folder
+        // Only the files that have changed since the latest release tag get there.
+        document.querySelector(selector).style.backgroundImage = [
+            "url('",
+            Updater.resolveAsset(asset),
+            "')"
+        ].join("");
+    }
+}
 
 /**
  * Starts POC workflow
