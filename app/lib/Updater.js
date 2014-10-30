@@ -89,7 +89,7 @@ Updater.loadJsAsset = function(asset) {
  */
 Updater.loadCssAsset = function(asset) {
     asset = Updater.resolveAsset(asset);
-    var tag = document.createElement("script");
+    var tag = document.createElement("link");
     tag.setAttribute("rel", "stylesheet");
     tag.setAttribute("type", "text/css");
     tag.setAttribute("href", asset);
