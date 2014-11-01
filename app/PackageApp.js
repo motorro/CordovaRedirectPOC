@@ -51,7 +51,7 @@ function processAssets() {
     // 1. Shows updated image - the one that has changed since last release
     setDynamicBg(".dynamic-background", "img/dynamic_img.jpg");
     // 2. Shows image from the packaged app - as soon as it remains the same
-    setDynamicBg(".dynamic-css", "img/dynamic_img_that_wasnt_updated.png");
+    setDynamicBg(".dynamic-background-that-wasnt-updated", "img/dynamic_img_that_wasnt_updated.jpg");
 
     /**
      * Set dynamic CSS background

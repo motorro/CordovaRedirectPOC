@@ -1,0 +1,55 @@
+html, body {
+    height: 100%;
+    padding: 0;
+}
+h1, h2, h3, h4, h5, h6, div {
+    clear: both;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin: 0.3em 0 0 0;
+}
+ol {
+    margin: 0.2em 0 0 0;
+}
+#log {
+    height: 10em;
+    overflow-y: scroll;
+    border: 1px solid Black;
+    margin-top: 0.5em;
+    padding: 0.5em;
+}
+#log p {
+    margin: 0;
+    padding: 0;
+}
+#assets {
+
+}
+#controls {
+    margin-top: 0.5em;
+    text-align: center;
+}
+div.left {
+    clear: none;
+    float: left;
+}
+div.asset {
+    margin: 3px;
+    text-align: center;
+    color: white;
+    width: 174px;
+    background-repeat: no-repeat;
+    background-position: top left;
+}
+div.asset.dynamic-background {
+    margin: 4px 5px 0 5px;
+    height: 95px;
+}
+div.asset.dynamic-background-that-wasnt-updated {
+    height: 135px;
+}
+div.asset.static-background {
+    margin: 0 5px 5px 5px;
+    height: 40px;
+    background-image: url('../img/static_img.png');
+}

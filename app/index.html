@@ -13,22 +13,32 @@
     <script type="text/javascript" src="assets/assetOverrides.js"></script>
     <script type="text/javascript" src="PackageApp.js"></script>
 
-    <link rel="stylesheet" href="assets/static/css/style.css" type="text/css"/>
+    <link rel="stylesheet" href="assets/static/css/static_style.css" type="text/css"/>
 </head>
 <body>
-<h1>Redirect POC::Packaged</h1>
-<div>
-    This is a packaged app that may eventually look for updates
-</div>
-<h2>Workflow</h2>
-<ol>
-    <li>Check the update URL</li>
-    <li>If update is found - download and unpack</li>
-</ol>
-<div id="controls">
-    <button id="start">Start workflow</button>
-    <button id="preloader">Back to preloader</button>
-</div>
-<div id="log"></div>
+    <h1>Redirect POC::Packaged</h1>
+    <div>
+        This is a packaged app that may eventually look for updates
+    </div>
+    <h2>Assets</h2>
+    <div id="assets">
+        <div class="asset left dynamic-background-that-wasnt-updated">-= Dynamic img asset =-</div>
+        <div class="left">
+            <div class="asset dynamic-background">-= Dynamic img asset =-</div>
+            <div class="asset static-background">
+                <span class="dynamic-css" id="to-be-set-by-dynamic-js"></span>
+            </div>
+        </div>
+    </div>
+    <h2>Workflow</h2>
+    <ol>
+        <li>Check the update URL</li>
+        <li>If update is found - download and unpack</li>
+    </ol>
+    <div id="controls">
+        <button id="start">Start workflow</button>
+        <button id="preloader">Back to preloader</button>
+    </div>
+    <div id="log"></div>
 </body>
 </html>
