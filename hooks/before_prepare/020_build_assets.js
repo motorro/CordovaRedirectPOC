@@ -119,9 +119,14 @@ function buildUpdateFileList(srcDir) {
             if (0 === commits) {
                 return [];
             }
+            console.log(["git diff HEAD~", commits, " --name-only --diff-filter=ACMR ", srcDir].join(""));
             return Q.nfcall(exec, ["git diff HEAD~", commits, " --name-only --diff-filter=ACMR ", srcDir].join(""))
                 .spread(function(stdout){
-                    return stdout.trim().split(/[\n]/).filter(function(name){ return "" !== name.trim(); });
+                    return stdout
+                        .trim()
+                        .split(/[\n]/)
+                        .filter(function(name){ return "" !== name.trim(); })
+                        .map(path.relative.bind(undefined, srcDir));
                 })
         })
         .then(function(files) {
