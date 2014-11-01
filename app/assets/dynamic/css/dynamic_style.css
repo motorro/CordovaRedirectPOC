@@ -1,3 +1,4 @@
 span.dynamic-css {
-    font: italic bold 1.8em sans-serif;
+    font: italic bold 1.8em serif;
+    color: Red;
 }
