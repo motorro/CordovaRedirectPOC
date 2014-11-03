@@ -104,7 +104,7 @@ function toPreloader() {
     log ("Going back to preloader...");
     window.setTimeout(
         function() {
-            window.location.href = "preloader.html";
+            window.location.href = Updater.PACKAGE_ASSET_URL_PREFIX + "preloader.html";
         },
         500
     );

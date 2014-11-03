@@ -26,12 +26,6 @@ var ASSET_OVERRIDES = require('assetOverrides');
 var OVERRIDE_ASSET_URL_PREFIX = "assets/dynamic/";
 
 /**
- * Packaged app dynamic asset prefix
- * @type {string}
- */
-var PACKAGE_ASSET_URL_PREFIX = undefined;
-
-/**
  * Update directory name
  * @type {string}
  */
@@ -55,20 +49,26 @@ function Updater() {
 }
 
 /**
+ * Packaged app dynamic asset prefix
+ * @type {string}
+ */
+Updater.PACKAGE_ASSET_URL_PREFIX = undefined;
+
+/**
  * Resolves dynamic asset filename to packaged or updated file
  * Resolved path is relative to index.html
  * @param {string} asset Asset path relative to 'dynamic' folder
  * @returns {string} Asset URL
  */
 Updater.resolveAsset = function(asset) {
-    if (null == PACKAGE_ASSET_URL_PREFIX) {
+    if (null == Updater.PACKAGE_ASSET_URL_PREFIX) {
         var cordovaAppPath = cordova && cordova.file && cordova.file.applicationDirectory;
         if (null == cordovaAppPath) {
             throw (new Error("Package prefix is not defined. Check that cordova device is ready."));
         }
-        PACKAGE_ASSET_URL_PREFIX = cordovaAppPath + "www/" + OVERRIDE_ASSET_URL_PREFIX;
+        Updater.PACKAGE_ASSET_URL_PREFIX = cordovaAppPath + "www/";
     }
-    return (ASSET_OVERRIDES[asset] !== undefined ? OVERRIDE_ASSET_URL_PREFIX : PACKAGE_ASSET_URL_PREFIX) + asset;
+    return (ASSET_OVERRIDES[asset] !== undefined ? OVERRIDE_ASSET_URL_PREFIX : Updater.PACKAGE_ASSET_URL_PREFIX + OVERRIDE_ASSET_URL_PREFIX) + asset;
 };
 
 /**
