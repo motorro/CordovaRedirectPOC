@@ -147,7 +147,8 @@ function buildAssetOverrideList(files, module) {
     var fileMap = {};
     var i = files.length;
     while (--i >= 0) {
-        fileMap[files[i]] = true;
+        // Replace path separator with forward slash or it will fail on windows
+        fileMap[files[i].replace(path.sep, "/")] = true;
     }
 
     var output = fs.createWriteStream(module);
