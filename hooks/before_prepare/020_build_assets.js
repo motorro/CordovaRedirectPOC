@@ -30,6 +30,12 @@ var hooksPromiseUtils = require([HOOKS_DIR, "hooksPromiseUtils"].join("/"));
 var ASSETS_NAME = "assets";
 var SOURCE_DIR  = path.join(ROOT_DIR, "app", ASSETS_NAME);
 var DESTINATION_DIR  = path.join(ROOT_DIR, "www", ASSETS_NAME);
+
+/**
+ * Release tag pattern
+ * Used to determine which files have changed since the last release
+ * @type {string}
+ */
 var RELEASE_TAG_PATTERN = "r*";
 
 console.log ("========> HOOK: BUILD ASSETS");
