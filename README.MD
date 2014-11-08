@@ -66,6 +66,7 @@ Here is how the app works on a mobile...
 Loaded as a first page to cordova and redirects to either packaged or updated application.
 
 Redirect workflow:
+
 1.  Check the storage folder for update package
 2.  If update is found - redirect there
 3.  If update wasn't found - redirect to packaged index.html
@@ -76,6 +77,7 @@ This is a main application that demonstrates the use of static and dynamic asset
 The update loader may be also triggered from here.
 
 Update workflow:
+
 1. Check for update (just a stub for this demo)
 2. Download a zip file from the `updateURL` configured above
 3. Unzip files to application storage directory. For this demo a non-protected dir is used!
